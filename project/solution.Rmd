@@ -275,7 +275,7 @@ data.frame(y = y, group = group,
   theme_bw(18)
 ```
 
-And then we run JAGS code and use the results to plot the posterior means in the plot: 
+And then we run the JAGS code and use the resulting posterior means in the plot: 
 
 ```{r}
 # Jags code --------------------------------------------------------
