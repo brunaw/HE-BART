@@ -1,0 +1,74 @@
+# Model
+
+Define the following model. Suppose we have the observation of a tree node as:
+$$y_{ij}, i = 1,\ldots,n_j, \; j = 1\ldots, m$$
+where $y_{ij}$ is observation $i$ in group $j$. There are different numbers of observations $n_j$ in each group, so for example $n_1$ is the number of observations in group 1, etc. There are $m$ groups. The total number of observations is $n = \sum_{j=1}^m n_j$
+
+Then, for each tree node, suppose we have the likelihood:
+$$y_{ij} \sim N(\mu_j, \tau^{-1})$$
+
+so each group has an overall mean $\mu_j$, with an overall precision term $\tau$. 
+
+We then have a hierarchical prior distribution:
+
+$$\mu_j \sim N(\mu, k(\tau^{-1}))$$
+
+where $k$ will be taken as a constant for simplicity, 
+and the hyper-parameter prior distributions are:
+
+$$\mu \sim N(0, \tau_\mu)$$
+$$\tau \sim Ga(\alpha, \beta)$$
+
+
+Where the values $\tau_\mu, \alpha, \beta$ are all fixed.
+
+
+## Maths 
+
+- The likelihood of each tree node will be:
+
+\begin{equation}
+L = \prod_{j = 1}^{m} \prod_{i = 1}^{n_j} p(y_{ij} | \mu_{j}, \tau) \\
+L \propto \tau^{n/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \}
+\end{equation}
+
+with prior distributions:
+
+- $\mu_j | \mu, \tau, k$
+
+\begin{equation}
+p(\mu_1, \dots, \mu_m | \mu, \omega) \propto (\tau/k)^{m/2}
+exp\{ - \frac{\tau}{2k} \sum_{j = 1}^{m} (\mu_j - \mu)^2  \}
+\end{equation}
+
+- $\tau | \alpha, \beta$
+
+$$p(\tau | \alpha, \beta) \propto \tau^{\alpha - 1} exp\{ - \beta \tau \}$$
+
+- $\mu  | \tau_{\mu}$
+
+\begin{equation}
+p(\mu | \tau_{\mu}) \propto \tau_{\mu}^{1/2}
+exp\{ - \frac{ \tau_{\mu}}{2} \mu^2  \}
+\end{equation}
+
+
+and their joint distribution as: 
+
+- $p(\tau, \mu_1, \dots, \mu_m, \mu| y, k, \tau_{\mu}, \alpha, \beta)$
+
+\begin{equation}
+p(\tau, \mu_1, \dots, \mu_m, \mu| y, k, \tau_{\mu}, \alpha, \beta)
+\propto
+
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times \\
+
+(\tau/k)^{m/2}
+exp\{ - \frac{\tau}{2k} \sum_{j = 1}^{m} (\mu_j - \mu)^2  \} \\ 
+\times  
+\tau_{\mu}^{1/2}
+exp\{ - \frac{ \tau_{\mu}}{2} \mu^2  \} 
+\times \tau^{n/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \}
+\end{equation}

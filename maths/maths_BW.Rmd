@@ -1,0 +1,187 @@
+---
+title: "Maths for Mixed BART"
+output: html_document
+header-includes:
+   - \usepackage{amsmath}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Following Andrew's idea $y$ (10/12/2020)
+$$y_{ij} \sim N(\lambda_j, \tau^{-1})$$
+$$\lambda_j \sim N(\mu, k\tau^{-1})$$
+$$\mu \sim N(\mu_\mu,\tau_\mu^{-1})$$
+$$\tau \sim Ga(\alpha, \beta)$$
+
+with $N = \sum_{j = 1}^{m} n_j$. Define $\mathbf{M}$ to be an $N\times m$ binary matrix which allocates each observation to a group. 
+
+Writing things out in matrix format:
+
+\begin{equation}
+\boldsymbol{y} = 
+\begin{bmatrix}
+    y_{11}       \\
+    y_{21}       \\
+    \vdots        \\
+    y_{n_m m}      
+\end{bmatrix}
+\end{equation}
+
+\begin{equation}
+\boldsymbol{M} = 
+\begin{bmatrix}
+    0    & 1   & 0 \\
+    1    & 0   & 0 \\
+    1    & 0   & 0 \\
+    \vdots & \vdots & \vdots        \\
+    0    & 0    & 1 
+\end{bmatrix}
+\end{equation}
+
+\begin{equation}
+\boldsymbol{\lambda} = 
+\begin{bmatrix}
+    \lambda_1       \\
+    \vdots        \\
+    \lambda_m
+\end{bmatrix}
+\end{equation}
+
+
+then $\boldsymbol{y} \sim MVN_{N}( \boldsymbol{M \lambda}, \tau^{-1} \boldsymbol{I})$ and $\boldsymbol{\lambda} \sim MVN_{m}( \mu \boldsymbol{1}, k \tau^{-1} \boldsymbol{I})$. 
+
+\begin{equation}
+E[\boldsymbol{y} | \mu, \tau] = E_\lambda E_y[\boldsymbol{y} | \boldsymbol{\lambda}, \mu, \tau] =
+\boldsymbol{M} E[\boldsymbol{\lambda}] = \mu \boldsymbol{M1} \\
+
+Var[\boldsymbol{y} | \mu, \tau] = Var[\boldsymbol{M} \boldsymbol{\lambda}] +
+\tau^{-1} \boldsymbol{I} = \boldsymbol{M} \boldsymbol{M}^{T}(k\tau^{-1}) + \tau^{-1} \boldsymbol{I}
+
+\end{equation}
+
+so 
+$$\boldsymbol{y} | \mu, \tau, k, \tau_{\mu} \sim MVN_{N}(\mu \boldsymbol{M1} , \boldsymbol{M} \boldsymbol{M}^{T}(k\tau^{-1}) + \tau^{-1} \boldsymbol{I})$$
+ We now use this as the starting point and integrate out $\mu$ and $\tau$. The equation we end up with should be a function of $M$, $k$, $\tau_\mu$, $\alpha$, and $\beta$. 
+
+To start, define: $\Psi = k M M^T + I$ so that $y|\ldots \sim MVN(\mu \boldsymbol{M1}, \tau^{-1} \boldsymbol{\Psi})$. Then we obtain:
+
+\begin{eqnarray*}
+\pi(y | k, \tau_\mu, \alpha, \beta) &=& \int \int \tau^{\alpha - 1} \exp [ -\beta \tau] \times \tau_\mu^{1/2} \exp \left[ -\frac{\tau_\mu}{2} (\mu - \mu_\mu)^2 \right] \tau^{N/2} |\Psi|^{1/2} \exp \left[ -\frac{\tau}{2} \left\{  (\boldsymbol{y} - \mu \boldsymbol{M1})^T \boldsymbol{\Psi} (\boldsymbol{y} - \mu \boldsymbol{M1}) \right\} \right] \partial\mu \partial\tau \\ 
+
+&=& \int \tau^{\alpha - 1} \exp [ -\beta \tau] \times \tau_\mu^{1/2} 
+ \tau^{N/2} |\Psi|^{1/2}\partial\tau  \\
+&\times& \int \exp \left[ -\frac{1}{2} [\tau_\mu (\mu - \mu_\mu)^2 + \tau (\boldsymbol{y} - \mu \boldsymbol{M1})^T \boldsymbol{\Psi} (\boldsymbol{y} - \mu \boldsymbol{M1})] \right]  \partial\mu \\ 
+
+
+\end{eqnarray*}
+
+The inner expression can be rewritten as: 
+
+\begin{eqnarray*}
+Q &=&
+[\tau_\mu (\mu - \mu_\mu)^2 + \tau (\boldsymbol{y} - \mu \boldsymbol{M1})^T \boldsymbol{\Psi} (\boldsymbol{y} - \mu \boldsymbol{M1})] \\
+
+&=& \mu^2(\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}    \boldsymbol{M1}) - 2\mu (\tau_{\mu} \mu_{\mu} + 
+\tau \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1}) + \tau_{\mu} \mu_{\mu}^2 +
+\tau \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y} \\
+
+&=& \tau_{\mu} \mu_{\mu}^2 + \tau \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y}   + 
+(\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1})
+\left(\mu - \frac{\tau_{\mu} \mu_{\mu} + \tau \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1}}{\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1}}\right)^2 + 
+\frac{(\tau_{\mu} \mu_{\mu} + \tau \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1})^2}{(\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1})}\\
+
+\end{eqnarray*}
+
+
+that can be be plugged back into our equation as a 
+$\text{Normal}(\frac{\tau_{\mu} \mu_{\mu} + \tau \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1}}{(\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1}}, (\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1})^{-1})$: 
+
+
+\begin{eqnarray*}
+\pi(y | k, \tau_\mu, \alpha, \beta)
+
+&=& \int \tau^{\alpha - 1} \exp [ -\beta \tau] \times \tau_\mu^{1/2} 
+ \tau^{N/2} |\Psi|^{1/2}\partial\tau  \\
+&\times& \int \exp \left[ -\frac{1}{2} [\tau_\mu (\mu - \mu_\mu)^2 + \tau (\boldsymbol{y} - \mu \boldsymbol{M1})^T \boldsymbol{\Psi} (\boldsymbol{y} - \mu \boldsymbol{M1})] \right]  \partial\mu \\ 
+
+
+&=& \int \tau^{\alpha - 1} \exp [ -\beta \tau] \times \tau_\mu^{1/2} 
+ \tau^{N/2} |\Psi|^{1/2}\partial\tau  
+ \exp \left[ -\frac{1}{2}\{ \tau_{\mu} \mu_{\mu}^2 + \tau \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y}\} \right]  
+ \exp \left[ -\frac{1}{2} \left \{ 
+ \frac{(\tau_{\mu} \mu_{\mu} + \tau \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1})^2}{(\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1})} \right \} \right]\\
+&\times& \int \exp \left[ -\frac{1}{2} [
+(\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1})
+\left(\mu - \frac{\tau_{\mu} \mu_{\mu} + \tau \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1}}{\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1}}\right)^2 
+\right] \frac{(\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1})^{1/2}}{(\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1})^{1/2}} \thinspace
+\thinspace \thinspace \partial\mu \\ 
+
+&=& \int \tau^{\alpha - 1} \exp [ -\beta \tau] \times \tau_\mu^{1/2} 
+ \tau^{N/2} |\Psi|^{1/2} 
+ \exp \left[ -\frac{1}{2}\{ \tau_{\mu} \mu_{\mu}^2 + \tau \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y}\} \right] \\ 
+&\times& \exp \left[ -\frac{1}{2} \left \{ 
+ \frac{(\tau_{\mu} \mu_{\mu} + \tau \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1})^2}{(\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1})} \right \} \right] \frac{1}{(\tau_{\mu} + \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1})^{1/2}} \thinspace
+\thinspace \thinspace \partial\tau \\ 
+
+\end{eqnarray*}
+
+Now, replacing $\tau_{\mu} = k \tau$, we have: 
+
+
+\begin{eqnarray*}
+\pi(y | k, \tau_\mu, \alpha, \beta)
+
+&=& \int \tau^{\alpha - 1} \exp [ -\beta \tau] \times (k \tau)^{1/2} 
+ \tau^{N/2} |\Psi|^{1/2} 
+ \exp \left[ -\frac{1}{2}\{ k \tau\mu_{\mu}^2 + \tau \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y}\} \right] \\ 
+&\times& \exp \left[ -\frac{1}{2} \left \{ 
+ \frac{(k \tau\mu_{\mu} + \tau \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1})^2}{(k \tau+ \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1})} \right \} \right] \frac{1}{(k \tau+ \tau (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1})^{1/2}} \thinspace
+\thinspace \thinspace \partial\tau \\ 
+
+
+&=& |\Psi|^{1/2}  k^{1/2} \int \tau^{\alpha - 1} \tau^{1/2} \tau^{N/2}
+\exp [ -\beta \tau] \times 
+\exp \left[ -\frac{\tau}{2}\{ k \mu_{\mu}^2 + \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y}\} \right] \\ 
+&\times& \exp \left[ -\frac{1}{2} \left \{ 
+ \frac{(\tau (k \mu_{\mu} + \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1}))^2}{ (\tau (k + (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1})} \right \} \right] \frac{1}{(\tau (k +   (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1}))^{1/2}} \thinspace
+\thinspace \thinspace \partial\tau \\ 
+
+&=& |\Psi|^{1/2}  k^{1/2} \frac{1}{(k + (\boldsymbol{M1})^{T} \boldsymbol{\Psi}\boldsymbol{M1})^{1/2}}
+\int \tau^{\alpha - 1} \tau^{N/2} \\
+&\times& \exp [ -\beta \tau] \times 
+\exp \left[ -\frac{\tau}{2}\{ k \mu_{\mu}^2 + \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y} + \frac{(k \mu_{\mu} + \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1})^2}{k + (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1}} \} \right] 
+\thinspace \thinspace \partial\tau \\ 
+
+&=& |\Psi|^{1/2}  k^{1/2} \frac{1}{(k + (\boldsymbol{M1})^{T} \boldsymbol{\Psi}\boldsymbol{M1})^{1/2}}
+\int \tau^{N/2 + \alpha - 1} \\
+&\times& \exp [ -\tau \{ \beta + \frac{1}{2}(k \mu_{\mu}^2 + \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y} + \frac{(k \mu_{\mu} + \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1})^2}{k + (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1}} ) \}]
+\thinspace \thinspace \partial\tau \\ 
+
+\end{eqnarray*}
+
+
+where the main expression can be seen as a 
+$\text{Gamma}(N/2 + \alpha,  \beta + \frac{1}{2}(k \mu_{\mu}^2 + \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y} + \frac{(k \mu_{\mu} + \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1})^2}{k + (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1}} ))$
+
+and: 
+
+\begin{eqnarray*}
+\pi(y | k, \tau_\mu, \alpha, \beta)
+
+&=& |\Psi|^{1/2}  k^{1/2} \frac{1}{(k + (\boldsymbol{M1})^{T} \boldsymbol{\Psi}\boldsymbol{M1})^{1/2}}
+\int \tau^{N/2 + \alpha - 1} \\
+&\times& \exp [ -\tau \{ \beta + \frac{1}{2}(k \mu_{\mu}^2 + \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y} + \frac{(k \mu_{\mu} + \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1})^2}{k + (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1}} ) \}]
+\thinspace \thinspace \frac{
+(\beta + \frac{1}{2}(k \mu_{\mu}^2 + \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y} + \frac{(k \mu_{\mu} + \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1})^2}{k + (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1}}))^{N/2 + \alpha}
+}{
+(\beta + \frac{1}{2}(k \mu_{\mu}^2 + \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y} + \frac{(k \mu_{\mu} + \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1})^2}{k + (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1}}))^{N/2 + \alpha}
+} \partial\tau \\ 
+
+&=& |\Psi|^{1/2}  k^{1/2} \frac{1}{(k + (\boldsymbol{M1})^{T} \boldsymbol{\Psi}\boldsymbol{M1})^{1/2}}
+
+(\beta + \frac{1}{2}(k \mu_{\mu}^2 + \boldsymbol{y}^T \boldsymbol{\Psi} \boldsymbol{y} + \frac{(k \mu_{\mu} + \boldsymbol{y}^T \boldsymbol{\Psi}\boldsymbol{M1})^2}{k + (\boldsymbol{M1})^{T}\boldsymbol{\Psi}\boldsymbol{M1}}))^{-(N/2 + \alpha)}\\ 
+
+\end{eqnarray*}

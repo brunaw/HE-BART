@@ -1,0 +1,41 @@
+# Checking posteriors by simulation
+
+On this section, we have the results for the posterior calculations
+using the expressions found previously in this document. The 
+posterior density values are calculated using simulated values, in the
+same maths structure described in the "Maths" section.
+
+In all plots, the dashed red lines represent the 'true' values
+for each parameter. Ideally, these values should maximize the posteriors.
+If that happens we can be more sure that our calculations are 
+correct. 
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, out.height = "20%")
+```
+
+- This first plot is just a summary of the distribution of the simulated data
+```{r}
+knitr::include_graphics("img/boxplot.png")
+```
+
+- The posterior for $\tau$ seem to have maximum at a value very close to
+the 'true' $\tau$ (used to simulated the data)
+
+```{r}
+knitr::include_graphics("img/post_tau.png")
+```
+
+
+- For both $\mu$ and $\mu_j$, that doesn't happen as we wanted, and
+the maxima are not so close to the original values  
+
+```{r}
+knitr::include_graphics("img/post_mu_j.png")
+```
+
+
+```{r}
+knitr::include_graphics("img/post_mu.png")
+```

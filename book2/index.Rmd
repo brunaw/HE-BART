@@ -1,0 +1,22 @@
+--- 
+title: "Mixed BART Models: maths and discussion" 
+author: "Bruna Wundervald"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+bibliography: [book.bib, packages.bib]
+description: ""
+documentclass: book
+classoption: a4paper
+colorlinks: yes
+fontsize: 10pt
+geometry: margin=3cm
+biblio-style: apalike
+link-citations: yes
+---
+
+# Intro
+
+This documents works as a summary of our work towards building a 
+"Mixed model" style BART. All the maths in detail will be written 
+here, as well as our simulation results. 
+

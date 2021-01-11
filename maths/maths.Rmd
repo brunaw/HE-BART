@@ -1,0 +1,780 @@
+---
+title: "Maths for Mixed BART"
+output: html_document
+header-includes:
+   - \usepackage{amsmath}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Model
+
+Define the following model. Suppose we have the observation of a tree node as:
+$$y_{ij}, i = 1,\ldots,n_j, \; j = 1\ldots, m$$
+where $y_{ij}$ is observation $i$ in group $j$. There are different numbers of observations $n_j$ in each group, so for example $n_1$ is the number of observations in group 1, etc. There are $m$ groups. The total number of observations is $n = \sum_{j=1}^m n_j$
+
+Then, for each tree node, suppose we have the likelihood:
+$$y_{ij} \sim N(\mu_j, \tau^{-1})$$
+
+so each group has an overall mean $\mu_j$, with an overall precision term $\tau$. 
+
+We then have a hierarchical prior distribution:
+
+$$\mu_j \sim N(\mu, k(\tau^{-1}))$$
+
+where $k$ will be taken as a constant for simplicity, 
+and the hyper-parameter prior distributions are:
+
+$$\mu \sim N(0, \tau_\mu)$$
+$$\tau \sim Ga(\alpha, \beta)$$
+
+
+Where the values $\tau_\mu, \alpha, \beta$ are all fixed.
+
+
+## Maths 
+
+- The likelihood of each tree node will be:
+
+\begin{equation}
+L = \prod_{j = 1}^{m} \prod_{i = 1}^{n_j} p(y_{ij} | \mu_{j}, \tau) \\
+L \propto \tau^{n/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \}
+\end{equation}
+
+with prior distributions:
+
+- $\mu_j | \mu, \tau, k$
+
+\begin{equation}
+p(\mu_1, \dots, \mu_m | \mu, \omega) \propto (\tau/k)^{m/2}
+exp\{ - \frac{\tau}{2k} \sum_{j = 1}^{m} (\mu_j - \mu)^2  \}
+\end{equation}
+
+- $\tau | \alpha, \beta$
+
+$$p(\tau | \alpha, \beta) \propto \tau^{\alpha - 1} exp\{ - \beta \tau \}$$
+
+- $\mu  | \tau_{\mu}$
+
+\begin{equation}
+p(\mu | \tau_{\mu}) \propto \tau_{\mu}^{1/2}
+exp\{ - \frac{ \tau_{\mu}}{2} \mu^2  \}
+\end{equation}
+
+
+and their joint distribution as: 
+
+- $p(\tau, \mu_1, \dots, \mu_m, \mu| y, k, \tau_{\mu}, \alpha, \beta)$
+
+\begin{equation}
+p(\tau, \mu_1, \dots, \mu_m, \mu| y, k, \tau_{\mu}, \alpha, \beta)
+\propto
+
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times \\
+
+(\tau/k)^{m/2}
+exp\{ - \frac{\tau}{2k} \sum_{j = 1}^{m} (\mu_j - \mu)^2  \} \\ 
+\times  
+\tau_{\mu}^{1/2}
+exp\{ - \frac{ \tau_{\mu}}{2} \mu^2  \} 
+\times \tau^{n/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \}
+\end{equation}
+
+## Posterior for $\tau$ 
+
+- $p(\tau | \mu_1, \dots, \mu_m, y, \alpha, \beta, k)$
+
+\begin{equation}
+p(\tau | \mu_1, \dots, \mu_m, y, \alpha, \beta) \propto
+\tau^{\alpha - 1} exp\{ - \beta \tau \}  \times \\
+
+(\tau/k)^{m/2} exp \{ -\frac{\tau}{2k} \sum_{j = 1}^{m}
+(\mu_{j} - \mu)^2 \} \times \\
+
+\tau^{n/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \} \\
+
+\propto \tau^{n/2  + m/2 + \alpha - 1 }
+exp \{ - \tau \Big( \frac{\sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2}{2} + \beta  +
+\frac{\sum_{j = 1}^{m}(\mu_{j} - \mu)^2}{2k} \Big) \}
+\end{equation}
+
+So  $\tau | \mu_1, \dots, \mu_m, y, \alpha, \beta, k \sim 
+\text{Gamma}(n/2  + m/2 + \alpha, 
+\Big( \frac{\sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2}{2} + \beta  +
+\frac{\sum_{j = 1}^{m}(\mu_{j} - \mu)^2}{2k} \Big))$
+
+
+## Posterior for $\mu_j$
+
+
+\begin{equation}
+Q =    (\tau/k) \sum_{j=1}^{m} (\mu_j - \mu)^2 + 
+\tau \sum_{j = 1}^{m} \sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \\
+
+Q =    \tau [ \sum_{j = 1}^{m} n_j \mu_j^2 + \frac{\mu_j^2}{k} -  
+(\sum_{j = 1}^{m} \frac{2 \mu \mu_j}{k} + 2 \bar y_j n_j \mu_j)] \\
+
+Q \propto    \tau [ \sum_{j = 1}^{m} (n_j + \frac{1}{k}) \mu_j^2 -  
+2 \mu_j (\frac{\mu}{k} +  \bar y_j n_j )] \\
+
+Q \propto \tau [ \sum_{j = 1}^{m} (n_j + \frac{1}{k})(\mu_j -  
+ \frac{\mu/k +  \bar y_j n_j}{n_j + 1/k})^2]\\
+
+\end{equation}
+So for each $\mu_j$
+
+
+$$\mu_j | \mu, y, \tau, k \sim N(\tau[\frac{\mu/k +  \bar y_j n_j}{n_j + 1/k}], (n_j + \frac{1}{k})^{-1} \tau)$$
+
+## Posterior for $\mu$ 
+
+Similarly, for $\mu$ we have: 
+
+\begin{equation}
+Q =    \frac{\tau}{k} \sum_{j = 1}^{m} (\mu_j - \mu)^2 +  \tau_{\mu}\mu^2 \\
+
+Q =    \frac{\tau}{k}  \sum_{j=1}^{m} (\mu_j^{2} - 2 \mu \mu_j + \mu^2) + 
+\tau_{\mu} \mu^2 \\
+
+
+Q \propto (\tau_{\mu} + \frac{\tau}{k}  m ) \mu^2 - 
+\frac{2\tau}{k} \sum_{j=1}^{m} \mu \mu_j \\
+
+Q \propto (\tau_{\mu} + \frac{\tau}{k}  m ) \mu^2 - 
+\frac{2\tau}{k}  \mu \bar \mu m \\
+
+
+Q \propto (\tau_{\mu} + \frac{\tau}{k}  m )(\mu - 
+\frac{(\tau/k) \bar \mu m}{\tau_{\mu} + \frac{\tau}{k}  m})^2
+
+\end{equation}
+
+So for $\mu$ we have that the conditional distribution: 
+
+$$\mu | \mu_1, \dots, \mu_{m}, \mu_{\mu}, \tau_{\mu}, k \sim N(
+\frac{(\tau/k) \bar \mu m}{\tau_{\mu} + \frac{\tau}{k}  m}, 
+(\tau_{\mu} + \frac{\tau}{k}  m )^{-1})$$
+
+# Following Andrew's idea $y$ (10/12/2020)
+$$y_{ij} \sim N(\mu_j, \tau^{-1})$$
+$$\mu_j \sim N(\mu, k\tau^{-1})$$
+
+with $N = \sum_{j = 1}^{m} n_j$ and:
+
+
+\begin{equation}
+\boldsymbol{y} = 
+\begin{bmatrix}
+    y_{11}       \\
+    y_{21}       \\
+    \vdots        \\
+    y_{n_m m}      
+\end{bmatrix}
+\end{equation}
+
+\begin{equation}
+\boldsymbol{M} = 
+\begin{bmatrix}
+    0    & 1   & 0 \\
+    1    & 0   & 0 \\
+    1    & 0   & 0 \\
+    \vdots & \vdots & \vdots        \\
+    0    & 0    & 1 
+\end{bmatrix}
+\end{equation}
+
+
+then $\boldsymbol{y} \sim MVN_{N}( \boldsymbol{M \mu}, \tau^{-1} \boldsymbol{I}_{N\times N})$ and $\boldsymbol{\mu} \sim MVN_{m}( \boldsymbol{I}_{1\times m} \mu , k \tau^{-1} \boldsymbol{I}_{N\times N})$. 
+
+\begin{equation}
+E[\boldsymbol{y} | \mu, \tau] = E[\boldsymbol{y} | \boldsymbol{\mu}, \mu, \tau] =
+\boldsymbol{M} E[\boldsymbol{\mu}] = \boldsymbol{M} \mu \\
+
+Var[\boldsymbol{y} | \mu, \tau] = Var[\boldsymbol{M} \boldsymbol{\mu}] +
+\tau^{-1} \boldsymbol{I}_{N\times N} = \boldsymbol{M} \boldsymbol{M}^{T}(k\tau^{-1}) + \tau^{-1} \boldsymbol{I}_{N\times N}
+
+\end{equation}
+
+so $\boldsymbol{y} | \mu, \tau, k, \tau_{\mu} \sim MVN_{N}(\boldsymbol{M} \mu \boldsymbol{I}_{m\times 1}, \boldsymbol{M} \boldsymbol{M}^{T}(k\tau^{-1}) + \tau^{-1} \boldsymbol{I}_{N\times N})$
+
+$\mathbf{M} = N\times m$
+
+\begin{equation}
+\pi(\boldsymbol{y} | k, \tau_{\mu}) = \int \int \tau^{\alpha - 1} exp\{ - \beta \tau \} \times \tau_{\mu}^{1/2} exp \{ - \frac{ \tau_{\mu}}{2} \mu^2  \} \times \\
+
+exp \{ - \frac{1}{2} ( \boldsymbol{y} - \mu \boldsymbol{M}_{N \times m} \boldsymbol{I}_{m \times 1})  [\boldsymbol{M} \boldsymbol{M}^{T}(k\tau^{-1}) + \tau^{-1} \boldsymbol{I}_{N\times N}]^{-1}_{N \times N}
+( \boldsymbol{y} - \mu \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})) \}
+|(\boldsymbol{M} \boldsymbol{M}^{T}(k\tau^{-1}) + \tau^{-1} \boldsymbol{I}_{N\times N})|^{-1/2} \partial \tau \partial \mu \\ 
+
+= \int  \tau^{\alpha - 1} exp\{ - \beta \tau \} \times \tau_{\mu}^{1/2} 
+|\tau^{-1} (\boldsymbol{M} \boldsymbol{M}^{T}k + \boldsymbol{I}_{N\times N})|^{-1/2}  \partial \tau \times \\
+\int  exp \{ - \frac{ \tau_{\mu}}{2} \mu^2  \} 
+exp \{ - \frac{1}{2} ( \boldsymbol{y} - \mu \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})  \tau [\boldsymbol{M} \boldsymbol{M}^{T}k + \boldsymbol{I}_{N\times N}]^{-1}
+( \boldsymbol{y} - \mu \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})) \}
+ \partial \mu \\ 
+ 
+ \text{let's call: } \Sigma = [\boldsymbol{M} \boldsymbol{M}^{T}k + \boldsymbol{I}_{N\times N}] \\
+ 
+ = \int  \tau^{\alpha - 1} exp\{ - \beta \tau \} \times \tau_{\mu}^{1/2} 
+|\tau^{-1} (\boldsymbol{M} \boldsymbol{M}^{T}k + \boldsymbol{I}_{N\times N})|^{-1/2}  \partial \tau \times \\
+\int  exp \{ - \frac{ \tau_{\mu}}{2} \mu^2  \} 
+exp \{ - \frac{1}{2} ( \boldsymbol{y} - \mu \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})  \tau \Sigma^{-1}
+( \boldsymbol{y} - \mu \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}) \}
+ \partial \mu \\
+ 
+ 
+ = \int  \tau^{\alpha - 1} exp\{ - \beta \tau \} \times \tau_{\mu}^{1/2} 
+|\tau^{-1} (\boldsymbol{M} \boldsymbol{M}^{T}k + \boldsymbol{I}_{N\times N})|^{-1/2}  \partial \tau \times \\
+\int  exp \{ - \frac{ \tau_{\mu}}{2} \mu^2  \} 
+exp \{ - \frac{1}{2} [\boldsymbol{y}^T  \tau \Sigma^{-1} \boldsymbol{y} + 
+(\mu \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})^{T} \tau \Sigma^{-1}
+\mu \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1} - 2 
+\boldsymbol{y}^{T} \tau \Sigma^{-1} \mu \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}] \}
+ \partial \mu \\ 
+
+\end{equation}
+
+Let's write Q as:
+
+\begin{equation}
+Q = [\boldsymbol{y}^T  \tau \Sigma^{-1} \boldsymbol{y} + 
+(\mu \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})^{T} \tau \Sigma^{-1}
+\mu \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1} - 2 
+\boldsymbol{y}^{T} \tau \Sigma^{-1} \mu \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}] + \tau_{\mu} \mu^2  \\
+
+
+Q = \boldsymbol{y}^T  \tau \Sigma^{-1} \boldsymbol{y} + \mu^2 [\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})^{T} \tau \Sigma^{-1} \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}] - 2 \mu [\boldsymbol{y}^{T} \tau \Sigma^{-1} \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}] \\
+
+Q = \boldsymbol{y}^T  \tau \Sigma^{-1} \boldsymbol{y} + (\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})^{T} \tau \Sigma^{-1} \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})(\mu - 
+\boldsymbol{y}^{T} \tau \Sigma^{-1}\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}[\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}]^{-1}) -  \\
+
+\boldsymbol{y}^{T} \tau \Sigma^{-1} \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}[\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}]^{-1}\boldsymbol{y}^{T} \tau \Sigma^{-1}  \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}\\
+
+\end{equation}
+
+which will then allows us to integrate a 
+$\text{Normal}(\boldsymbol{y}^{T} \tau \Sigma^{-1}\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}[\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}]^{-1}), [\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}]^{-1})$, that plugged back into our previous
+equation will leave us with: 
+
+\begin{equation}
+\pi(\boldsymbol{y} | k, \tau_{\mu})
+
+ = \int  \tau^{\alpha - 1} exp\{ - \beta \tau \} \times \tau_{\mu}^{1/2} 
+|\tau^{-1} (\boldsymbol{M} \boldsymbol{M}^{T}k + \boldsymbol{I}_{N\times N})|^{-1/2}  \partial \tau \times \\
+\int 
+exp \{ - \frac{1}{2} [\boldsymbol{y}^T  \tau \Sigma^{-1} \boldsymbol{y} +  (\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})^{T} \tau \Sigma^{-1} \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})(\mu - 
+\boldsymbol{y}^{T} \tau \Sigma^{-1}\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}[\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}]^{-1}) -  \\
+\boldsymbol{y}^{T} \tau \Sigma^{-1} \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}[\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}]^{-1}\boldsymbol{y}^{T} \tau \Sigma^{-1}  \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}] \} \partial \mu \\
+ 
+ = \int  \tau^{\alpha - 1} exp\{ - \beta \tau \} \times \tau_{\mu}^{1/2} 
+|\tau^{-1} (\boldsymbol{M} \boldsymbol{M}^{T}k + \boldsymbol{I}_{N\times N})|^{-1/2}  \partial \tau \times \\
+exp \{ - \frac{1}{2} [\boldsymbol{y}^T  \tau \Sigma^{-1} \boldsymbol{y} 
+- \boldsymbol{y}^{T} \tau \Sigma^{-1} \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}[\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}]^{-1}\boldsymbol{y}^{T} \tau \Sigma^{-1}  \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1} ] \} |(\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})|^{-1/2}\\
+\int exp \{ - \frac{1}{2} [(\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})^{T} \tau \Sigma^{-1} \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})(\mu - 
+\boldsymbol{y}^{T} \tau \Sigma^{-1}\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}[\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}]^{-1})  \} |(\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})|^{1/2} \partial \mu \\
+
+= \tau_{\mu}^{1/2} |(\boldsymbol{M} \boldsymbol{M}^{T}k + \boldsymbol{I}_{N\times N})|^{-1/2} \times 
+|(\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})|^{-1/2} \\
+\int  \tau^{\alpha - 1} exp\{ - \beta \tau \}  \tau^{N/2} \times
+exp \{ - \frac{1}{2} [\boldsymbol{y}^T  \tau \Sigma^{-1} \boldsymbol{y}] \} \times 
+exp \{ - \frac{1}{2} [ - \boldsymbol{y}^{T} \tau \Sigma^{-1} \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}[\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}]^{-1}\boldsymbol{y}^{T} \tau \Sigma^{-1}  \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}] \}    \partial \tau \\
+
+= \tau_{\mu}^{1/2} |(\boldsymbol{M} \boldsymbol{M}^{T}k + \boldsymbol{I}_{N\times N})|^{-1/2} \times 
+|(\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1})|^{-1/2} \\
+\int  \tau^{N/2 + \alpha - 1} exp\{ - \tau (\beta  + \frac{[\boldsymbol{y}^T  \Sigma^{-1} \boldsymbol{y}]}{2} -  \\
+\frac{\tau \boldsymbol{y}^{T} \Sigma^{-1} \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}[\tau_{\mu} +  (\boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}]^{-1}\boldsymbol{y}^{T} \Sigma^{-1}  \boldsymbol{M}_{N \times m}  \boldsymbol{I}_{m\times 1}}{2} \}    \partial \tau
+
+
+
+
+\end{equation}
+
+# Conditionals for $y$ (10/12/2020)
+
+
+\begin{equation}
+\pi(y_{j, 1}, \dots, y_{j, n_j} | k) = \text{ integrate out } \mu_j, \mu, \tau
+
+\\
+= \int \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times \\
+(\tau/k)^{m/2}
+exp\{ - \frac{\tau}{2k} \sum_{j = 1}^{m} (\mu_j - \mu)^2  \} 
+\times  
+\tau_{\mu}^{1/2}
+exp\{ - \frac{ \tau_{\mu}}{2} \mu^2  \} 
+\times \tau^{n_j/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \} \partial \tau \partial \mu \partial \boldsymbol{\mu} \\
+
+= 
+\tau_{\mu}^{1/2} \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} 
+exp \{ - \frac{ \tau_{\mu}}{2} \mu^2   \} \partial \mu
+\partial \tau \times \\
+\int exp\{ - \frac{\tau}{2k} \sum_{j = 1}^{m} (\mu_j - \mu)^2  \}  \times
+   exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \} \partial \boldsymbol{\mu} \\
+
+= 
+\tau_{\mu}^{1/2} \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} 
+exp \{ - \frac{ \tau_{\mu}}{2} \mu^2   \} \partial \mu
+\partial \tau \times \\
+\int exp\{ - \frac{\tau}{2} \Big( \frac{1}{k}  \sum_{j = 1}^{m} (\mu_j - \mu)^2  +
+ \sum_{j = 1}^{m} \sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \Big ) \} \partial \boldsymbol{\mu} \\
+
+\end{equation}
+
+So we can write and rearrange Q as:
+
+\begin{equation}
+
+Q = (\tau/k) \sum_{j=1}^{m} (\mu_j - \mu)^2 + 
+\tau \sum_{j = 1}^{m} \sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \\
+
+Q =    \tau [ \sum_{j = 1}^{m} n_j \mu_j^2 + \frac{\mu_j^2}{k} -  
+(\sum_{j = 1}^{m} \frac{2 \mu \mu_j}{k} + 2 \bar y_j n_j \mu_j) +
+\sum_{j = 1}^{m} \sum_{i = 1}^{n_j} y_{ij}^2 + \frac{m \mu^2}{k}] \\
+
+Q =   \sum_{j = 1}^{m} \mu_j^2 (n_j \tau + \frac{\tau}{k}) -   
+\sum_{j = 1}^{m} 2 \mu_j (\frac{\mu \tau}{k} + \tau \bar y_j n_j)  
++ \tau (\sum_{j = 1}^{m} \sum_{i = 1}^{n_j} y_{ij}^2 + \frac{m \mu^2}{k}) \\
+
+Q =   \sum_{j = 1}^{m} (n_j \tau + \frac{\tau}{k})\Big(
+\mu_j - \frac{\frac{\mu \tau}{k} + \tau \bar y_j n_j}{n_j \tau + \frac{\tau}{k}}\Big )^2
++ \tau (\sum_{j = 1}^{m} \sum_{i = 1}^{n_j} y_{ij}^2 + \frac{m \mu^2}{k}) - 
+\frac{(\frac{\mu \tau}{k} + \tau \bar y_j n_j)^2}{n_j \tau + \frac{\tau}{k}} 
+
+\end{equation}
+
+which can be plugged back into our equation as:
+
+\begin{equation}
+\pi(y_{j, 1}, \dots, y_{j, n_j} | k) = \text{ integrate out } \mu_j, \mu, \tau
+
+= 
+\tau_{\mu}^{1/2} \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} 
+exp \{ - \frac{ \tau_{\mu}}{2} \mu^2   \} \partial \mu
+\partial \tau \times \\
+\int exp\{ - \frac{1}{2} \Big(\sum_{j = 1}^{m} (n_j \tau + \frac{\tau}{k})\Big(
+\mu_j - \frac{\frac{\mu \tau}{k} + \tau \bar y_j n_j}{n_j \tau + \frac{\tau}{k}}\Big )^2
++ \tau (\sum_{j = 1}^{m} \sum_{i = 1}^{n_j} y_{ij}^2 + \frac{m \mu^2}{k}) - 
+\frac{(\frac{\mu \tau}{k} + \tau \bar y_j n_j)^2}{n_j \tau + \frac{\tau}{k}} ) \} \partial \boldsymbol{\mu} \frac{\sum_{j = 1}^{m} (n_j \tau + \frac{\tau}{k})}{\sum_{j = 1}^{m} (n_j \tau + \frac{\tau}{k})}\\
+
+
+= 
+\tau_{\mu}^{1/2} \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} 
+exp \{ - \frac{ \tau_{\mu}}{2} \mu^2   \} \partial \mu
+\partial \tau \times \\
+exp\{ - \frac{\tau}{2} (\sum_{j = 1}^{m} \sum_{i = 1}^{n_j} y_{ij}^2 + \frac{m \mu^2}{k} - \frac{(\frac{\mu}{k} + \bar y_j n_j)^2}{n_j + \frac{1}{k}} ) \}
+\frac{1}{\sum_{j = 1}^{m} (n_j \tau + \frac{\tau}{k})}
+\times \\
+
+\int exp\{ - \frac{1}{2} \Big(\sum_{j = 1}^{m} (n_j \tau + \frac{\tau}{k})\Big(
+\mu_j - \frac{\frac{\mu \tau}{k} + \tau \sum_{j = 1}^{m} \bar y_j n_j}{\sum_{j = 1}^{m} n_j \tau + \frac{\tau}{k}}\Big )^2 \sum_{j = 1}^{m} \} (n_j \tau + \frac{\tau}{k})
+ \partial \boldsymbol{\mu} \\
+
+\end{equation}
+
+Which will integrate as a
+$\text{N}(\tau[\frac{\mu/k +  \bar y_j n_j}{n_j + 1/k}], ((n_j + \frac{1}{k}) \tau)^{-1}$
+
+
+
+\begin{equation}
+\pi(y_{j, 1}, \dots, y_{j, n_j} | k) = \text{ integrate out } \mu_j, \mu, \tau \\
+= \tau_{\mu}^{1/2} \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} 
+exp \{ - \frac{ \tau_{\mu}}{2} \mu^2   \} \\
+exp\{ - \frac{\tau}{2} (\sum_{j = 1}^{m} \sum_{i = 1}^{n_j} y_{ij}^2 + \frac{m \mu^2}{k} - \frac{(\frac{\mu}{k} + \bar y_j n_j)^2}{n_j + \frac{1}{k}} ) \}
+\frac{1}{\sum_{j = 1}^{m} (n_j \tau + \frac{\tau}{k})} \partial \mu
+\partial \tau \\
+
+= \tau_{\mu}^{1/2} \int  \frac{1}{\sum_{j = 1}^{m} (n_j \tau + \frac{\tau}{k})}
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+exp\{ - \frac{\tau}{2} (\sum_{j = 1}^{m} \sum_{i = 1}^{n_j} y_{ij}^2) \} 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} \partial \tau \\
+\int exp\{ - \frac{\tau}{2} (\frac{m \mu^2}{k} - \frac{(\frac{\mu}{k} + \bar y_j n_j)^2}{n_j + \frac{1}{k}})  - \frac{ \tau_{\mu}}{2} \mu^2   \} ) \}
+\partial \mu
+
+\end{equation}
+
+with which we can write a new Q as:
+
+
+\begin{equation}
+
+Q = \tau (\frac{m \mu^2}{k} - \frac{(\frac{\mu}{k} + \sum_{j = 1}^{m} \bar y_j n_j)^2}{\sum_{j = 1}^{m} n_j + \frac{1}{k}})  + \tau_{\mu} \mu^2    \\
+\text{let's write: } a = \frac{\tau}{\sum_{j = 1}^{m} n_j + \frac{1}{k}} \\
+
+Q = \frac{\tau m \mu^2}{k} - a (\frac{\mu}{k} + \sum_{j = 1}^{m} \bar y_j n_j)^2  + \tau_{\mu} \mu^2    \\
+
+Q = \frac{\tau m \mu^2}{k} - a \frac{\mu^2}{k^2} + 2 a \frac{\mu \sum_{j = 1}^{m} \bar y_j n_j }{k}   - a (\sum_{j = 1}^{m} \bar y_j n_j)^2 + \tau_{\mu} \mu^2    \\
+
+Q = \mu^2 (\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})  - 
+2 \mu(\frac{ - \sum_{j = 1}^{m} \bar y_j n_j }{k}) - a (\sum_{j = 1}^{m} \bar y_j n_j)^2 \\
+
+Q = (\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})\Big (\mu - 
+\frac{(-\frac{\sum_{j = 1}^{m} \bar y_j n_j }{k})}{
+(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})
+}\Big)^2 - 
+a (\sum_{j = 1}^{m} \bar y_j n_j)^2  - 
+\frac{(\frac{\sum_{j = 1}^{m} \bar y_j n_j }{k})^2}{
+(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})} \\
+\end{equation}
+
+Plugged back:
+
+\begin{equation}
+\pi(y_{j, 1}, \dots, y_{j, n_j} | k) = \text{ integrate out } \\
+= \tau_{\mu}^{1/2} \int  \frac{1}{\sum_{j = 1}^{m} (n_j \tau + \frac{\tau}{k})}
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+exp\{ - \frac{\tau}{2} (\sum_{j = 1}^{m} \sum_{i = 1}^{n_j} y_{ij}^2) \} 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} \partial \tau \\
+\int exp\{ - \frac{1}{2}\Big (
+(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})\Big (\mu - 
+\frac{(-\frac{\sum_{j = 1}^{m} \bar y_j n_j }{k})}{
+(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})
+}\Big)^2 - 
+a (\sum_{j = 1}^{m} \bar y_j n_j)^2  - 
+\frac{(\frac{\sum_{j = 1}^{m} \bar y_j n_j }{k})^2}{
+(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})}\Big )  \} ) \}
+\partial \mu \frac{(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})}{(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})} \\
+
+= \tau_{\mu}^{1/2} \int  \frac{1}{\sum_{j = 1}^{m} (n_j \tau + \frac{\tau}{k})}
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+exp\{ - \frac{\tau}{2} (\sum_{j = 1}^{m} \sum_{i = 1}^{n_j} y_{ij}^2) \} 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} \partial \tau \times \\
+\frac{1}{(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})} 
+exp\{ - \frac{1}{2}\Big (- a (\sum_{j = 1}^{m} \bar y_j n_j)^2  - 
+\frac{(\frac{\sum_{j = 1}^{m} \bar y_j n_j }{k})^2}{
+(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})}\Big )  \} ) \}
+
+\\ 
+
+\int (\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu}) 
+exp\{ - \frac{1}{2}\Big (
+(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})\Big (\mu - 
+\frac{(-\frac{\sum_{j = 1}^{m} \bar y_j n_j }{k})}{
+(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu}) }\Big)^2)  \} ) \}
+\partial \mu \\
+
+
+\end{equation}
+
+
+Which will integrate as a
+$\text{N}(\frac{(-\frac{\sum_{j = 1}^{m} \bar y_j n_j }{k})}{(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})}, (\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu}) ^{-1}$
+
+\begin{equation}
+\pi(y_{j, 1}, \dots, y_{j, n_j} | k) \\
+= \tau_{\mu}^{1/2} \int  \frac{1}{\sum_{j = 1}^{m} (n_j \tau + \frac{\tau}{k})}
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+exp\{ - \frac{\tau}{2} (\sum_{j = 1}^{m} \sum_{i = 1}^{n_j} y_{ij}^2) \} 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} \partial \tau \times \\
+\frac{1}{(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})} 
+exp\{ - \frac{1}{2}\Big (- a (\sum_{j = 1}^{m} \bar y_j n_j)^2  - 
+\frac{(\frac{\sum_{j = 1}^{m} \bar y_j n_j }{k})^2}{
+(\frac{m \tau}{k} - \frac{a}{k^2} + \tau_{\mu})}\Big )  \} ) \}
+
+
+\end{equation}
+
+
+
+# Conditionals for $y$
+
+With this, we can write the conditional distribution of a node 
+$j$ as:
+
+
+\begin{equation}
+\pi(y_{j, 1}, \dots, y_{j, n_j} | k) = \text{ integrate out } \mu_j, \mu, \tau
+
+\\
+= \int \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times \\
+(\tau/k)^{m/2}
+exp\{ - \frac{\tau}{2k} \sum_{j = 1}^{m} (\mu_j - \mu)^2  \} 
+\times  
+\tau_{\mu}^{1/2}
+exp\{ - \frac{ \tau_{\mu}}{2} \mu^2  \} 
+\times \tau^{n_j/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \} \partial \tau \partial \mu \partial \boldsymbol{\mu} \\
+
+= 
+\tau_{\mu}^{1/2} \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \} \partial \boldsymbol{\mu}  \partial \tau \times \\
+\int exp\{ - \frac{\tau}{2k} \sum_{j = 1}^{m} (\mu_j - \mu)^2  \}  \times
+exp \{ - \frac{ \tau_{\mu}}{2} \mu^2  \}  \partial \mu \\
+
+= 
+\tau_{\mu}^{1/2} \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \} \partial \boldsymbol{\mu}  \partial \tau  \times\\
+\int exp\{ - \frac{\tau}{2k} \sum_{j = 1}^{m} (\mu_j - \mu)^2 
+- \frac{ \tau_{\mu}}{2} \mu^2  \}  \partial \mu \\
+
+\end{equation}
+
+So we can write and rearrange Q as:
+
+\begin{equation}
+Q =    \frac{\tau}{k} \sum_{j = 1}^{m} (\mu_j - \mu)^2 +  \tau_{\mu}\mu^2 \\
+
+Q =    \frac{\tau}{k}  \sum_{j=1}^{m} (\mu_j^{2} - 2 \mu \mu_j + \mu^2) + 
+\tau_{\mu} \mu^2 \\
+
+Q = (\tau_{\mu} + \frac{\tau}{k}  m ) \mu^2 - 
+\frac{2\tau}{k} \sum_{j=1}^{m} \mu \mu_j 
++ \frac{\tau}{k}\sum_{j=1}^{m} \mu_j^{2} \\
+
+Q = (\tau_{\mu} + \frac{\tau}{k}  m ) \mu^2 - 
+\frac{2\tau}{k}  \mu \bar \mu m + \frac{\tau}{k}\sum_{j=1}^{m} \mu_j^{2}
+
+\\
+
+Q = (\tau_{\mu} + \frac{\tau}{k}  m )(\mu - 
+\frac{(\tau/k) \bar \mu m}{\tau_{\mu} + \frac{\tau}{k}  m})^2 + 
+ \frac{\tau}{k}\sum_{j=1}^{m} \mu_j^{2}- 
+\frac{((\tau/k) \bar \mu m)^2}{\tau_{\mu} + \frac{\tau}{k}  m}
+
+\end{equation}
+
+which will be plugged back into the equation as:
+
+\begin{equation}
+\pi(y_{j, 1}, \dots, y_{j, n_j} | k) = 
+\tau_{\mu}^{1/2} \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \} \partial \boldsymbol{\mu}  \partial \tau  \times  \\
+\int exp\{ - \frac{1}{2} \Big(
+(\tau_{\mu} + \frac{\tau}{k}  m )(\mu - 
+\frac{(\tau/k) \bar \mu m}{\tau_{\mu} + \frac{\tau}{k}  m})^2 + 
+ \frac{\tau}{k}\sum_{j=1}^{m} \mu_j^{2}- 
+\frac{((\tau/k) \bar \mu m)^2}{\tau_{\mu} + \frac{\tau}{k}  m}
+\Big) \}  \partial \mu \\
+
+= \tau_{\mu}^{1/2} \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \} \partial \boldsymbol{\mu}  \partial \tau \times \\
+exp\{ - \frac{1}{2} \Big(
+ \frac{\tau}{k}\sum_{j=1}^{m} \mu_j^{2}- 
+\frac{((\tau/k) \bar \mu m)^2}{\tau_{\mu} + \frac{\tau}{k}  m}
+\Big) \}  \int exp\{ - \frac{1}{2} \Big(
+(\tau_{\mu} + \frac{\tau}{k}  m )(\mu - 
+\frac{(\tau/k) \bar \mu m}{\tau_{\mu} + \frac{\tau}{k}  m})^2
+\Big) \} \partial \mu \\
+
+= \tau_{\mu}^{1/2} \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \} \partial \boldsymbol{\mu}  \partial \tau \times \\
+exp\{ - \frac{1}{2} \Big(
+ \frac{\tau}{k}\sum_{j=1}^{m} \mu_j^{2}- 
+\frac{((\tau/k) \bar \mu m)^2}{\tau_{\mu} + \frac{\tau}{k}  m}
+\Big) \}  \int exp\{ - \frac{1}{2} \Big(
+(\tau_{\mu} + \frac{\tau}{k}  m )(\mu - 
+\frac{(\tau/k) \bar \mu m}{\tau_{\mu} + \frac{\tau}{k}  m})^2
+\Big) \} \partial \mu \times  \frac{(\tau_{\mu} + \frac{\tau}{k}  m )^{1/2}}{(\tau_{\mu} + \frac{\tau}{k}  m )^{1/2}}\\
+
+
+\end{equation}
+
+will then integrate out as a $\text{Normal}(\frac{(\tau/k) \bar \mu m}{\tau_{\mu} + \frac{\tau}{k}  m}, (\tau_{\mu} + \frac{\tau}{k}  m )^{-1}))$, 
+leaving us with:
+
+\begin{equation}
+\pi(y_{j, 1}, \dots, y_{j, n_j} | k) 
+= \tau_{\mu}^{1/2} \int \int
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2} exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \} \partial \boldsymbol{\mu}  \partial \tau \times \\
+exp\{ - \frac{1}{2} \Big( \frac{\tau}{k}\sum_{j=1}^{m} \mu_j^{2}- 
+\frac{((\tau/k) \bar \mu m)^2}{\tau_{\mu} + \frac{\tau}{k}  m}
+\Big) \} \times  \frac{1}{(\tau_{\mu} + \frac{\tau}{k}  m )^{1/2}}\\
+
+= \tau_{\mu}^{1/2} \int  \frac{1}{(\tau_{\mu} + \frac{\tau}{k}  m )^{1/2}}
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2}  \partial \tau   \times \\
+\int exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \} \times 
+exp\{ - \frac{1}{2} \Big( \frac{\tau}{k}\sum_{j=1}^{m} \mu_j^{2}- 
+\frac{((\tau/k) \bar \mu m)^2}{\tau_{\mu} + \frac{\tau}{k}  m}
+\Big) \}   \partial \boldsymbol{\mu}  \\
+
+= \tau_{\mu}^{1/2} \int  \frac{1}{(\tau_{\mu} + \frac{\tau}{k}  m )^{1/2}}
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2}  \partial \tau  \times \\
+\int exp \{ -\frac{\tau}{2} \sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 \} \times 
+exp\{ - \frac{\tau}{2k} \Big(\sum_{j=1}^{m} \mu_j^{2}- 
+\frac{(\tau/k)(\sum_{j = 1}^{m} \mu_j)^2}{\tau_{\mu} + \frac{\tau}{k}  m}
+\Big) \}   \partial \boldsymbol{\mu}  \\
+
+= \tau_{\mu}^{1/2} \int  \frac{1}{(\tau_{\mu} + \frac{\tau}{k}  m )^{1/2}}
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2}  \partial \tau  \times \\
+\int exp \{ -\frac{\tau}{2k} \Big(\sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 k  +
+\sum_{j=1}^{m} \mu_j^{2}- 
+\frac{(\tau/k)(\sum_{j = 1}^{m} \mu_j)^2}{\tau_{\mu} + \frac{\tau}{k}  m}
+\Big) \}   \partial \boldsymbol{\mu}  \\
+
+
+\end{equation}
+
+let's now call:
+
+\begin{equation}
+\psi = \frac{(\tau/k)}{\tau_{\mu} + \frac{\tau}{k}  m}
+= \frac{\tau}{k(\tau_{\mu} + \frac{\tau}{k}  m)} 
+= \frac{\tau}{k\tau_{\mu} + \tau m} 
+
+\end{equation}
+
+so:
+
+\begin{equation}
+\pi(y_{j, 1}, \dots, y_{j, n_j} | k)
+
+= \tau_{\mu}^{1/2} \int  \frac{1}{(\tau_{\mu} + \frac{\tau}{k}  m )^{1/2}}
+\tau^{\alpha - 1} exp\{ - \beta \tau \} \times 
+(\tau/k)^{m/2} \times  \tau^{n_j/2}  \partial \tau   \times \\
+\int exp \{ -\frac{\tau}{2k} \Big(\sum_{j = 1}^{m}
+\sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 k  +
+\sum_{j=1}^{m} \mu_j^{2}- 
+(\sum_{j = 1}^{m} \mu_j)^2 \psi
+\Big) \}   \partial \boldsymbol{\mu}  \\
+
+
+\end{equation}
+
+and we can work with a new Q:
+
+\begin{equation}
+Q = \sum_{j = 1}^{m} \sum_{i = 1}^{n_j} (y_{ij} - \mu_j)^2 k  +
+\sum_{j=1}^{m} \mu_j^{2}- 
+(\sum_{j = 1}^{m} \mu_j)^2 \psi
+
+\\ 
+\end{equation}
+
+
+
+
+
+
+# other equations 
+\begin{equation}
+\int 
+\pi(y_{j, 1}, \dots, y_{j, n_j} | \mu, \tau) \pi(\mu | \tau, k) \partial \mu \\
+= \int \tau^{n_j/2} \exp \left\{- \frac{\tau}{2} 
+\sum_{i = 1}^{n_j}(y_{ji} - \mu_j)^2  \right \} \times (\frac{\tau}{k})^{1/2}
+\exp \left\{- \frac{\tau}{2k} (\mu_j - \mu)^2  \right \} \partial \mu   \\
+\\
+= \int \frac{\tau^{(n_j+1)/2}}{k^{1/2}}
+\exp \left\{- \frac{\tau}{2k} 
+(\sum_{i = 1}^{n_j}(y_{ji} - \mu_j)^2 k +  (\mu_j - \mu)^2)  \right \} \partial \mu  \\
+\\
+= \int \frac{\tau^{(n_j+1)/2}}{k^{1/2}}
+\exp \left\{- \frac{\tau}{2k} 
+(\sum_{i = 1}^{n_j} k y_{ji}^2 + k \mu_j^2 n_j - 2 k \mu_j n_j \bar y_j)+  (\mu_j^2 
++ \mu^2 - 2 \mu_j \mu)  \right \} \partial \mu  \\
+
+=  \frac{\tau^{(n_j+1)/2}}{k^{1/2}}
+\exp \left\{- \frac{\tau}{2k} 
+(\sum_{i = 1}^{n_j} k y_{ji}^2 + \mu^2) \right \} 
+\int 
+\exp \left\{- \frac{\tau}{2k} 
+( k \mu_j^2 n_j - 2 k \mu_j n_j \bar y_j + \mu_j^2 - 2 \mu_j \mu)  \right \} 
+\partial \mu  \\
+
+=  \frac{\tau^{(n_j+1)/2}}{k^{1/2}}
+\exp \left\{- \frac{\tau}{2k} 
+(\sum_{i = 1}^{n_j} k y_{ji}^2 + \mu^2) \right \} 
+\int 
+\exp \left\{- \frac{\tau}{2k} 
+( \mu_j^2 (k n_j + 1) - 2 \mu_j (k n_j \bar y_j + \mu))  \right \} 
+\partial \mu  \\
+
+
+\end{equation}
+
+
+
+and we can rearrange the inner expression as: 
+
+
+\begin{equation}
+Q = \mu_j^2 (k n_j + 1) - 2 \mu_j (k n_j \bar y_j + \mu) \\
+Q = (k n_j + 1)\Big[\mu_j^2 - \frac{2 \mu_j (k n_j \bar y_j + \mu)}{k n_j + 1}\Big] \\
+Q = (k n_j + 1) \Big[\Big(\mu_j^2 - \frac{k n_j \bar y_j + \mu}{k n_j + 1}\Big)^2 -
+\Big( \frac{k n_j \bar y_j + \mu)}{k n_j + 1} \Big)^2 \Big] \\
+
+\end{equation}
+
+
+then the conditional distribution for one node is: 
+
+
+\begin{equation}
+\pi(y_{j, 1}, \dots, y_{j, n_j} | \mu) =  \frac{\tau^{(n_j+1)/2}}{k^{1/2}}
+\exp \left\{- \frac{\tau}{2k} 
+(\sum_{i = 1}^{n_j} k y_{ji}^2 + \mu^2) \right \} \\ 
+\int 
+\exp \left\{- \frac{\tau}{2k} 
+\Big( (k n_j + 1) \Big[\Big(\mu_j^2 - \frac{k n_j \bar y_j + \mu}{k n_j + 1}\Big)^2 -
+\Big( \frac{k n_j \bar y_j + \mu)}{k n_j + 1} \Big)^2 \Big] \Big)  \right \} 
+\partial \mu  \\
+
+= \frac{\tau^{(n_j+1)/2}}{k^{1/2}} \exp \left\{  
+-\frac{\tau}{2k}
+(\sum_{i = 1}^{n_j} k y_{ji}^2 + \mu^2)  \right \} \times
+\exp \left\{  
+\frac{\tau}{2k} \frac{(k n_j \bar y_j + \mu)^2}{k n_j + 1} \right \}
+(\frac{\tau}{k} (k n_j + 1))^{-1/2} \\ 
+
+ =  \frac{\tau^{(n_j+2)/2}}{k}
+\exp \left\{- \frac{\tau}{2k} 
+\Big[(\sum_{i = 1}^{n_j} k y_{ji}^2 + \mu^2) 
+- \frac{(k n_j \bar y_j + \mu)^2}{k n_j + 1} \Big] \right \} \times 
+(\frac{\tau}{k} (k n_j + 1))^{-1/2}\\
+
+ =  \frac{\tau^{(n_j+1)/2}}{k^{1/2}}
+\exp \left\{- \frac{\tau}{2k} \Big[(\sum_{i = 1}^{n_j} k y_{ji}^2 + \mu^2) 
+- \frac{(k n_j \bar y_j + \mu)^2}{k n_j + 1} \Big] \right \} \\
+
+\end{equation}
+ 
+
+
+
+
+
+
+
+
+
+
+
+
