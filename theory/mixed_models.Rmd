@@ -1,0 +1,197 @@
+---
+title: ""
+author: ""
+output:
+  pdf_document:
+     number_sections: true
+header-includes:
+  - \usepackage{amsmath}
+  - \usepackage{mathtools}  
+  - \usepackage{float} 
+  - \mathtoolsset{showonlyrefs}  
+  - \floatplacement{figure}{H}
+  - \newcommand{\horrule}[1]{\rule{\linewidth}{#1}}
+editor_options: 
+  chunk_output_type: console
+#bibliography: references.bib  
+urlcolor: blue
+---
+
+
+\title{  
+ \normalfont \normalsize 
+ \textsc{Mixed Models Theory}\\[25pt]
+\author{Bruna Wundervald}
+\date{\normalsize August, 2020}
+\horrule{2pt} \\[ .5cm]}
+
+
+\maketitle
+
+\vspace{\fill}
+
+\tableofcontents
+
+\horrule{1pt} 
+
+
+\newpage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      message = FALSE,
+                      warning = FALSE,
+                      fig.align = 'center', 
+                      fig.show = 'H')
+
+
+library(knitr)
+
+#tema <- knit_theme$get("acid")
+
+#knit_theme$set(tema)
+```
+
+
+
+# Linear Mixed Models
+
+## Model Statement
+
+A LMM for a set of observations $y = (y_1, \dots, y_n)$ has 
+the general form
+
+
+
+\begin{equation}
+Y | b \sim N(\mu, \Sigma), \quad \mu = X\beta + Zb, \quad b \sim N(0, \Sigma_{b}),
+\end{equation}
+
+where $X$ and $Z$ are the $p \times n$ predictor matrices, and 
+$\Sigma = \sigma^2 I$ usually. An example for clustered data is:
+
+\begin{equation}
+Y_{ij} \sim N(\mu_{ij}, \Sigma), \quad \mu_{ij} = x^{T}_{ij} \beta + z^{T}_{ij} b, \quad b_i \sim N(0, \Sigma^{*}_{b}),
+\end{equation}
+
+where $x_{ij}$ now contains the predictor values for the $j$-th 
+observation in the $i-$th cluster, and $z_{ij}$ is the sub-vector 
+of  $x_{ij}$  that exhibits extra between cluster variation in 
+its relationship to $Y$. 
+
+
+### Example from the `lme4` paper
+
+Let us consider now the data from a sleep deprivation study, 
+from the `lme4` package paper. On day 0 the subjects had their 
+normal amount of sleep, and were from that night restricted to 3 hours 
+of sleep per night. The response variable represents the average 
+reaction times in milliseconds (ms) on a series of tests done each day
+for each subject. In the following figure, we can see  a general trend
+of the reaction time increasing with the passage of days, and the
+reaction time itself varies quite a lot between the subjects, in both
+slope (starting reaction time) and intercepts (effect of days in the 
+reaction time). This type of study justifies the use of a LMM, as
+we can clear see that there is a difference in the response 
+between individuals and days.  
+
+```{r, echo = FALSE, fig.cap= "Reaction time per days and subjects in the sleep deprivation study."}
+library(lme4)
+library(tidyverse)
+
+data <- lme4::sleepstudy
+
+# Dataviz
+ggplot(data, aes(x = Days, y = Reaction)) +
+  geom_point() +
+  geom_smooth(color = "pink", size = 0.5, alpha = 0) +
+  facet_wrap(~Subject, nrow = 3) +
+  theme_classic() +
+  scale_x_continuous(labels = scales::pretty_breaks()) +
+  labs(x = "Days")
+```
+
+The following code starts by creating an LMM model using the subject
+ID as the random effect, for which the standard error is estimated as
+37.12 (26.01, 52.94). The second model now adds the Days variable a
+a random effect slope, meaning the random intercept and slope are correlated (-0.48, 0.68). In comparison to the previous model, the
+ICs for the fixed effects got smaller, given that now we have less
+uncertainty about the population average. 
+
+
+```{r, echo = TRUE}
+lmm <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
+summary(lmm)
+round(confint(lmm, oldNames = FALSE), 2)
+```
+
+
+```{r, echo = TRUE}
+lmm_days <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+summary(lmm_days)
+round(confint(lmm_days, oldNames = FALSE), 2)
+```
+
+
+## Model Fitting
+
+The likelihood for $(\beta, \Sigma, \Sigma_b)$ is obtained as
+
+\begin{equation}
+
+f(y | \beta, \Sigma, \Sigma_b) \propto |V|^{-1/2}
+exp \Left(- \frac{1}{2} (y - X\beta)^{T} V^{-1} (y - X\beta) \Right),
+\end{equation}
+
+
+where $V = \Sigma + Z\Sigma_bZ^{T}$, which is usually numerically 
+maximised. The MLEs for LMM variance parameters can have
+large biases, so the alternative approache is the *REML*, a
+Restricted ML estimator. In this case, the variance parameters
+are estimated using a *marginal likelihood* based on the residuals 
+from a least squares fit of the model $E(Y) = X\beta$. 
+
+## Estimating Random Effects
+
+The standard predictor for the random effect vector $b$ is obtained
+by minimising the mean squared prediction error 
+$E[(\hat b - b)^{T}(\hat b - b)]$, where the expectation is over
+both $y$ and $b$ (???). This is achieved by
+
+\begin{equation}
+\hat b = E(b|y)  = (Z^{T} \Sigma^{-1}Z + \Sigma_b^{-1})^{-1} Z^{T} 
+\Sigma^{-1}(y - X\beta), 
+\end{equation}
+
+
+giving the *Best Linear Unbiased Predictor* for $b$, with 
+corresponding variance
+
+\begin{equation}
+var(b | y) = (Z^{T} \Sigma^{-1}Z + \Sigma_b^{-1})^{-1} 
+\end{equation}
+
+
+The estimates are obtained by pluggin in 
+$(\hat \beta, \hat \Sigma, \hat \Sigma_b)$, and are shrunk toward 0. 
+
+# Bayesian Linear Mixed Models
+
+A Bayesian version of the LMM is given by the use of prior distributions
+for $\beta$, $\Sigma$ and $\Sigma_b$. In the Bayesian case, the
+distiction between random and fixed effects is less clear, as both
+$\beta$ and $b$ will have probability distributions $f(\beta)$ and
+$f(b) = \int f(b | \Sigma_b) f(\Sigma_b)d\Sigma_b$. The most
+common way of fitting the BLMM is based on a Gibbs sampler. 
+
+
+
+
+
+
+
+
+
+
+
+

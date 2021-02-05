@@ -4,11 +4,11 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Chapter 5 Checking posteriors by simulation | Mixed BART Models: maths and discussion</title>
-  <meta name="description" content="Chapter 5 Checking posteriors by simulation | Mixed BART Models: maths and discussion" />
+  <title>Chapter 6 Code | Mixed BART Models: maths and discussion</title>
+  <meta name="description" content="Chapter 6 Code | Mixed BART Models: maths and discussion" />
   <meta name="generator" content="bookdown 0.19 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Chapter 5 Checking posteriors by simulation | Mixed BART Models: maths and discussion" />
+  <meta property="og:title" content="Chapter 6 Code | Mixed BART Models: maths and discussion" />
   <meta property="og:type" content="book" />
   
   
@@ -16,7 +16,7 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Chapter 5 Checking posteriors by simulation | Mixed BART Models: maths and discussion" />
+  <meta name="twitter:title" content="Chapter 6 Code | Mixed BART Models: maths and discussion" />
   
   
   
@@ -31,7 +31,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="conditional-distributions.html"/>
+<link rel="prev" href="checking-posteriors-by-simulation.html"/>
 <link rel="next" href="parameter-change.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
@@ -86,9 +86,9 @@
 <li class="chapter" data-level="5.1" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html#high-k-2.5"><i class="fa fa-check"></i><b>5.1</b> ‘High’ k: 2.5</a></li>
 <li class="chapter" data-level="5.2" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html#small-k-0.5"><i class="fa fa-check"></i><b>5.2</b> ‘Small’ k: 0.5</a></li>
 <li class="chapter" data-level="5.3" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html#y-k-tau_mu-mu_mu-alpha-beta-likelihood-profiles-for-k-mu_mu-and-beta"><i class="fa fa-check"></i><b>5.3</b> <span class="math inline">\(y | k, \tau_{\mu}, \mu_{\mu}, \alpha, \beta\)</span>: Likelihood profiles for k, <span class="math inline">\(\mu_{\mu}\)</span> and <span class="math inline">\(\beta\)</span></a></li>
-<li class="chapter" data-level="5.4" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html#code"><i class="fa fa-check"></i><b>5.4</b> Code</a></li>
 </ul></li>
-<li class="chapter" data-level="6" data-path="parameter-change.html"><a href="parameter-change.html"><i class="fa fa-check"></i><b>6</b> Parameter change</a></li>
+<li class="chapter" data-level="6" data-path="code.html"><a href="code.html"><i class="fa fa-check"></i><b>6</b> Code</a></li>
+<li class="chapter" data-level="7" data-path="parameter-change.html"><a href="parameter-change.html"><i class="fa fa-check"></i><b>7</b> Parameter change</a></li>
 <li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
 <li class="divider"></li>
 <li><a href="https://github.com/brunaw/mixed_bart" target="blank">Published with bookdown</a></li>
@@ -110,291 +110,17 @@
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="checking-posteriors-by-simulation" class="section level1">
-<h1><span class="header-section-number">Chapter 5</span> Checking posteriors by simulation</h1>
-<p>On this section, we have the results for the posterior calculations
-using the expressions found previously in this document. The
-posterior density values are calculated using simulated values, in the
-same maths structure described in the “Maths” section.</p>
-<p>In all plots, the dashed red lines represent the ‘true’ values
-for each parameter. Ideally, these values should maximize the posteriors.
-If that happens we can be more sure that our calculations are
-correct.</p>
-<p>The fixed parameters are <span class="math inline">\(\alpha = 0.5\)</span>, <span class="math inline">\(\beta = 1\)</span>, <span class="math inline">\(\mu_{\mu} = 0.5\)</span> and
-<span class="math inline">\(\tau_{\mu} = 0.5\)</span></p>
-<div id="high-k-2.5" class="section level2">
-<h2><span class="header-section-number">5.1</span> ‘High’ k: 2.5</h2>
-<ul>
-<li><p>This first plot is just a summary of the distribution of the simulated data, using 9 groups
-<img src="img/boxplot.png" width="1118" height="20%" /></p></li>
-<li><p>The posterior for <span class="math inline">\(\tau\)</span> seem to have maximum at a value very close to
-the ‘true’ <span class="math inline">\(\tau\)</span> (used to simulated the data)</p></li>
-</ul>
-<p><img src="img/post_tau.png" width="1118" height="20%" /></p>
-<ul>
-<li>For both <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\mu_j\)</span>, that doesn’t happen as we wanted, and
-the maxima are not so close to the original values</li>
-</ul>
-<p><img src="img/post_mu_j.png" width="1118" height="20%" /></p>
-<table class="table table-condensed table-hover" style="width: auto !important; margin-left: auto; margin-right: auto;">
-<thead>
-<tr>
-<th style="text-align:right;">
-Index
-</th>
-<th style="text-align:right;">
-Posterior average
-</th>
-<th style="text-align:right;">
-True mu
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
--2.546
-</td>
-<td style="text-align:right;">
--2.584
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.058
-</td>
-<td style="text-align:right;">
-0.043
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-3
-</td>
-<td style="text-align:right;">
--0.667
-</td>
-<td style="text-align:right;">
--0.599
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-4
-</td>
-<td style="text-align:right;">
--2.439
-</td>
-<td style="text-align:right;">
--2.353
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-5
-</td>
-<td style="text-align:right;">
-5.139
-</td>
-<td style="text-align:right;">
-5.196
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-6
-</td>
-<td style="text-align:right;">
--2.429
-</td>
-<td style="text-align:right;">
--2.402
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-7
-</td>
-<td style="text-align:right;">
-1.918
-</td>
-<td style="text-align:right;">
-1.695
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-8
-</td>
-<td style="text-align:right;">
-0.459
-</td>
-<td style="text-align:right;">
-0.491
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-9
-</td>
-<td style="text-align:right;">
--0.765
-</td>
-<td style="text-align:right;">
--0.771
-</td>
-</tr>
-</tbody>
-</table>
-<p><img src="img/post_mu.png" width="1118" height="20%" /></p>
-</div>
-<div id="small-k-0.5" class="section level2">
-<h2><span class="header-section-number">5.2</span> ‘Small’ k: 0.5</h2>
-<p><img src="img/boxplot_sm.png" width="1118" height="20%" /></p>
-<p><img src="img/post_tau_ms.png" width="1118" height="20%" /></p>
-<p><img src="img/post_mu_j_ms.png" width="1118" height="20%" /></p>
-<table class="table table-condensed table-hover" style="width: auto !important; margin-left: auto; margin-right: auto;">
-<thead>
-<tr>
-<th style="text-align:right;">
-Index
-</th>
-<th style="text-align:right;">
-Posterior average
-</th>
-<th style="text-align:right;">
-True mu
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
--0.592
-</td>
-<td style="text-align:right;">
--0.639
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
--0.115
-</td>
-<td style="text-align:right;">
--0.113
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-3
-</td>
-<td style="text-align:right;">
--0.307
-</td>
-<td style="text-align:right;">
--0.242
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-4
-</td>
-<td style="text-align:right;">
--0.617
-</td>
-<td style="text-align:right;">
--0.592
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-5
-</td>
-<td style="text-align:right;">
-0.818
-</td>
-<td style="text-align:right;">
-0.917
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-6
-</td>
-<td style="text-align:right;">
--0.635
-</td>
-<td style="text-align:right;">
--0.602
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-7
-</td>
-<td style="text-align:right;">
-0.337
-</td>
-<td style="text-align:right;">
-0.217
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-8
-</td>
-<td style="text-align:right;">
--0.058
-</td>
-<td style="text-align:right;">
--0.024
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-9
-</td>
-<td style="text-align:right;">
--0.290
-</td>
-<td style="text-align:right;">
--0.276
-</td>
-</tr>
-</tbody>
-</table>
-<p><img src="img/post_mu_ms.png" width="1118" height="20%" /></p>
-</div>
-<div id="y-k-tau_mu-mu_mu-alpha-beta-likelihood-profiles-for-k-mu_mu-and-beta" class="section level2">
-<h2><span class="header-section-number">5.3</span> <span class="math inline">\(y | k, \tau_{\mu}, \mu_{\mu}, \alpha, \beta\)</span>: Likelihood profiles for k, <span class="math inline">\(\mu_{\mu}\)</span> and <span class="math inline">\(\beta\)</span></h2>
-<p><img src="img/ll_prof_mu.png" width="1079" height="20%" /></p>
-<p><img src="img/ll_prof_k.png" width="1079" height="20%" /></p>
-<p><img src="img/ll_prof_beta.png" width="1079" height="20%" /></p>
-</div>
-<div id="code" class="section level2">
-<h2><span class="header-section-number">5.4</span> Code</h2>
+<div id="code" class="section level1">
+<h1><span class="header-section-number">Chapter 6</span> Code</h1>
 <p>Find the latest version at <code>https://github.com/brunaw/mixed_bart/blob/master/code/simulation_MB/MB_math_check.R</code></p>
 
-</div>
 </div>
             </section>
 
           </div>
         </div>
       </div>
-<a href="conditional-distributions.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="checking-posteriors-by-simulation.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
 <a href="parameter-change.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>

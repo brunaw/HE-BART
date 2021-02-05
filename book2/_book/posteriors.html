@@ -24,7 +24,7 @@
 <meta name="author" content="Bruna Wundervald" />
 
 
-<meta name="date" content="2021-01-11" />
+<meta name="date" content="2021-02-05" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -51,6 +51,8 @@
 
 
 <script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+<script src="libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
 
 
 
@@ -80,7 +82,13 @@
 <li class="chapter" data-level="3.3" data-path="posteriors.html"><a href="posteriors.html#posterior-for-mu"><i class="fa fa-check"></i><b>3.3</b> Posterior for <span class="math inline">\(\mu\)</span></a></li>
 </ul></li>
 <li class="chapter" data-level="4" data-path="conditional-distributions.html"><a href="conditional-distributions.html"><i class="fa fa-check"></i><b>4</b> Conditional Distributions</a></li>
-<li class="chapter" data-level="5" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html"><i class="fa fa-check"></i><b>5</b> Checking posteriors by simulation</a></li>
+<li class="chapter" data-level="5" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html"><i class="fa fa-check"></i><b>5</b> Checking posteriors by simulation</a><ul>
+<li class="chapter" data-level="5.1" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html#high-k-2.5"><i class="fa fa-check"></i><b>5.1</b> ‘High’ k: 2.5</a></li>
+<li class="chapter" data-level="5.2" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html#small-k-0.5"><i class="fa fa-check"></i><b>5.2</b> ‘Small’ k: 0.5</a></li>
+<li class="chapter" data-level="5.3" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html#y-k-tau_mu-mu_mu-alpha-beta-likelihood-profiles-for-k-mu_mu-and-beta"><i class="fa fa-check"></i><b>5.3</b> <span class="math inline">\(y | k, \tau_{\mu}, \mu_{\mu}, \alpha, \beta\)</span>: Likelihood profiles for k, <span class="math inline">\(\mu_{\mu}\)</span> and <span class="math inline">\(\beta\)</span></a></li>
+<li class="chapter" data-level="5.4" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html#code"><i class="fa fa-check"></i><b>5.4</b> Code</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="parameter-change.html"><a href="parameter-change.html"><i class="fa fa-check"></i><b>6</b> Parameter change</a></li>
 <li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
 <li class="divider"></li>
 <li><a href="https://github.com/brunaw/mixed_bart" target="blank">Published with bookdown</a></li>
@@ -138,12 +146,12 @@ Q =    \tau [ \sum_{j = 1}^{m} n_j \mu_j^2 + \frac{\mu_j^2}{k} -
 Q \propto    \tau [ \sum_{j = 1}^{m} (n_j + \frac{1}{k}) \mu_j^2 -  
 2 \mu_j (\frac{\mu}{k} +  \bar y_j n_j )] \\
 
-Q \propto \tau [ \sum_{j = 1}^{m} (n_j + \frac{1}{k})(\mu_j -  
+Q \propto [ \sum_{j = 1}^{m} (n_j + \frac{1}{k})(\mu_j -  
  \frac{\mu/k +  \bar y_j n_j}{n_j + 1/k})^2]\\
 
 \end{equation}\]</span>
 So for each <span class="math inline">\(\mu_j\)</span></p>
-<p><span class="math display">\[\mu_j | \mu, y, \tau, k \sim N(\tau[\frac{\mu/k +  \bar y_j n_j}{n_j + 1/k}], (n_j + \frac{1}{k})^{-1} \tau)\]</span></p>
+<p><span class="math display">\[\mu_j | \mu, y, \tau, k \sim N(\frac{\mu/k +  \bar y_j n_j}{n_j + 1/k}, (n_j + \frac{1}{k})^{-1} \tau)\]</span></p>
 </div>
 <div id="posterior-for-mu" class="section level2">
 <h2><span class="header-section-number">3.3</span> Posterior for <span class="math inline">\(\mu\)</span></h2>

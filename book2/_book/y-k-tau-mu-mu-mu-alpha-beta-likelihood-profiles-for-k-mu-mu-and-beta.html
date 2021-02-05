@@ -4,11 +4,11 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Mixed BART Models: maths and discussion</title>
-  <meta name="description" content="Mixed BART Models: maths and discussion" />
+  <title>Chapter 6 \(y | k, \tau_{mu}, \mu_{\mu}, \alpha, \beta\): Likelihood profiles for k, \(\mu_{\mu}\) and \(\beta\) | Mixed BART Models: maths and discussion</title>
+  <meta name="description" content="Chapter 6 \(y | k, \tau_{mu}, \mu_{\mu}, \alpha, \beta\): Likelihood profiles for k, \(\mu_{\mu}\) and \(\beta\) | Mixed BART Models: maths and discussion" />
   <meta name="generator" content="bookdown 0.19 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Mixed BART Models: maths and discussion" />
+  <meta property="og:title" content="Chapter 6 \(y | k, \tau_{mu}, \mu_{\mu}, \alpha, \beta\): Likelihood profiles for k, \(\mu_{\mu}\) and \(\beta\) | Mixed BART Models: maths and discussion" />
   <meta property="og:type" content="book" />
   
   
@@ -16,7 +16,7 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Mixed BART Models: maths and discussion" />
+  <meta name="twitter:title" content="Chapter 6 \(y | k, \tau_{mu}, \mu_{\mu}, \alpha, \beta\): Likelihood profiles for k, \(\mu_{\mu}\) and \(\beta\) | Mixed BART Models: maths and discussion" />
   
   
   
@@ -31,8 +31,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-
-<link rel="next" href="model.html"/>
+<link rel="prev" href="checking-posteriors-by-simulation.html"/>
+<link rel="next" href="code.html"/>
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
@@ -85,10 +85,9 @@
 <li class="chapter" data-level="5" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html"><i class="fa fa-check"></i><b>5</b> Checking posteriors by simulation</a><ul>
 <li class="chapter" data-level="5.1" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html#high-k-2.5"><i class="fa fa-check"></i><b>5.1</b> ‘High’ k: 2.5</a></li>
 <li class="chapter" data-level="5.2" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html#small-k-0.5"><i class="fa fa-check"></i><b>5.2</b> ‘Small’ k: 0.5</a></li>
-<li class="chapter" data-level="5.3" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html#y-k-tau_mu-mu_mu-alpha-beta-likelihood-profiles-for-k-mu_mu-and-beta"><i class="fa fa-check"></i><b>5.3</b> <span class="math inline">\(y | k, \tau_{\mu}, \mu_{\mu}, \alpha, \beta\)</span>: Likelihood profiles for k, <span class="math inline">\(\mu_{\mu}\)</span> and <span class="math inline">\(\beta\)</span></a></li>
-<li class="chapter" data-level="5.4" data-path="checking-posteriors-by-simulation.html"><a href="checking-posteriors-by-simulation.html#code"><i class="fa fa-check"></i><b>5.4</b> Code</a></li>
 </ul></li>
-<li class="chapter" data-level="6" data-path="parameter-change.html"><a href="parameter-change.html"><i class="fa fa-check"></i><b>6</b> Parameter change</a></li>
+<li class="chapter" data-level="6" data-path="y-k-tau-mu-mu-mu-alpha-beta-likelihood-profiles-for-k-mu-mu-and-beta.html"><a href="y-k-tau-mu-mu-mu-alpha-beta-likelihood-profiles-for-k-mu-mu-and-beta.html"><i class="fa fa-check"></i><b>6</b> <span class="math inline">\(y | k, \tau_{mu}, \mu_{\mu}, \alpha, \beta\)</span>: Likelihood profiles for k, <span class="math inline">\(\mu_{\mu}\)</span> and <span class="math inline">\(\beta\)</span></a></li>
+<li class="chapter" data-level="7" data-path="code.html"><a href="code.html"><i class="fa fa-check"></i><b>7</b> Code</a></li>
 <li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
 <li class="divider"></li>
 <li><a href="https://github.com/brunaw/mixed_bart" target="blank">Published with bookdown</a></li>
@@ -110,25 +109,19 @@
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="header">
-<h1 class="title">Mixed BART Models: maths and discussion</h1>
-<p class="author"><em>Bruna Wundervald</em></p>
-<p class="date"><em>2021-02-05</em></p>
-</div>
-<div id="intro" class="section level1">
-<h1><span class="header-section-number">Chapter 1</span> Intro</h1>
-<p>This documents works as a summary of our work towards building a
-“Mixed model” style BART. All the maths in detail will be written
-here, as well as our simulation results.</p>
-
+<div id="y-k-tau_mu-mu_mu-alpha-beta-likelihood-profiles-for-k-mu_mu-and-beta" class="section level1">
+<h1><span class="header-section-number">Chapter 6</span> <span class="math inline">\(y | k, \tau_{mu}, \mu_{\mu}, \alpha, \beta\)</span>: Likelihood profiles for k, <span class="math inline">\(\mu_{\mu}\)</span> and <span class="math inline">\(\beta\)</span></h1>
+<p><img src="img/ll_prof_mu.png" width="1079" height="20%" /></p>
+<p><img src="img/ll_prof_k.png" width="1079" height="20%" /></p>
+<p><img src="img/ll_prof_beta.png" width="1079" height="20%" /></p>
 </div>
             </section>
 
           </div>
         </div>
       </div>
-
-<a href="model.html" class="navigation navigation-next navigation-unique" aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="checking-posteriors-by-simulation.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="code.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>

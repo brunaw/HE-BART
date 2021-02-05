@@ -40,14 +40,14 @@ Q =    \tau [ \sum_{j = 1}^{m} n_j \mu_j^2 + \frac{\mu_j^2}{k} -
 Q \propto    \tau [ \sum_{j = 1}^{m} (n_j + \frac{1}{k}) \mu_j^2 -  
 2 \mu_j (\frac{\mu}{k} +  \bar y_j n_j )] \\
 
-Q \propto \tau [ \sum_{j = 1}^{m} (n_j + \frac{1}{k})(\mu_j -  
+Q \propto [ \sum_{j = 1}^{m} (n_j + \frac{1}{k})(\mu_j -  
  \frac{\mu/k +  \bar y_j n_j}{n_j + 1/k})^2]\\
 
 \end{equation}
 So for each $\mu_j$
 
 
-$$\mu_j | \mu, y, \tau, k \sim N(\tau[\frac{\mu/k +  \bar y_j n_j}{n_j + 1/k}], (n_j + \frac{1}{k})^{-1} \tau)$$
+$$\mu_j | \mu, y, \tau, k \sim N(\frac{\mu/k +  \bar y_j n_j}{n_j + 1/k}, (n_j + \frac{1}{k})^{-1} \tau)$$
 
 ## Posterior for $\mu$ 
 

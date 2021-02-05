@@ -1,3 +1,4 @@
+
 # Checking posteriors by simulation
 
 On this section, we have the results for the posterior calculations
@@ -10,12 +11,15 @@ for each parameter. Ideally, these values should maximize the posteriors.
 If that happens we can be more sure that our calculations are 
 correct. 
 
+The fixed parameters are $\alpha = 0.5$, $\beta = 1$, $\mu_{\mu} = 0.5$ and
+$\tau_{\mu} = 0.5$
 
+## 'High' k: 2.5 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, out.height = "20%")
+knitr::opts_chunk$set(echo = FALSE, out.height = "20%", message = FALSE)
 ```
 
-- This first plot is just a summary of the distribution of the simulated data
+- This first plot is just a summary of the distribution of the simulated data, using 9 groups 
 ```{r}
 knitr::include_graphics("img/boxplot.png")
 ```
@@ -37,5 +41,85 @@ knitr::include_graphics("img/post_mu_j.png")
 
 
 ```{r}
+library(kableExtra)
+library(tidyverse)
+library(formattable)
+
+tab <- read.table("mus.txt")
+
+tab %>% 
+  select(2:4) %>%
+  mutate_all(round, 3) %>% 
+  setNames(c("Index", "Posterior average", "True mu")) %>% 
+  knitr::kable(escape = FALSE, format = 'html') %>%
+  kable_styling(bootstrap_options = c("condensed", "hover"), 
+                full_width = FALSE)
+  
+```
+
+
+```{r}
 knitr::include_graphics("img/post_mu.png")
 ```
+
+## 'Small' k: 0.5 
+
+
+```{r}
+knitr::include_graphics("img/boxplot_sm.png")
+```
+
+
+```{r}
+knitr::include_graphics("img/post_tau_ms.png")
+```
+
+```{r}
+knitr::include_graphics("img/post_mu_j_ms.png")
+```
+
+
+```{r}
+library(kableExtra)
+library(tidyverse)
+library(formattable)
+
+tab <- read.table("mus_ms.txt")
+
+tab %>% 
+  select(2:4) %>%
+  mutate_all(round, 3) %>% 
+  setNames(c("Index", "Posterior average", "True mu")) %>% 
+  knitr::kable(escape = FALSE, format = 'html') %>%
+  kable_styling(bootstrap_options = c("condensed", "hover"), 
+                full_width = FALSE)
+  
+```
+
+
+```{r}
+knitr::include_graphics("img/post_mu_ms.png")
+```
+
+
+## $y | k, \tau_{\mu}, \mu_{\mu}, \alpha, \beta$: Likelihood profiles for k, $\mu_{\mu}$ and $\beta$
+
+```{r}
+knitr::include_graphics("img/ll_prof_mu.png")
+```
+
+
+```{r}
+knitr::include_graphics("img/ll_prof_k.png")
+```
+
+
+```{r}
+knitr::include_graphics("img/ll_prof_beta.png")
+```
+
+## Code 
+
+Find the latest version at `https://github.com/brunaw/mixed_bart/blob/master/code/simulation_MB/MB_math_check.R` 
+
+

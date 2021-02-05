@@ -5,13 +5,17 @@ date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
 bibliography: [book.bib, packages.bib]
 description: ""
+fontsize: 12pt
+fontfamily: arial
 documentclass: book
 classoption: a4paper
 colorlinks: yes
-fontsize: 10pt
-geometry: margin=3cm
+geometry: margin=0cm
 biblio-style: apalike
 link-citations: yes
+header-includes:
+  - \usepackage{fontspec}
+  - \setmainfont{Arial}
 ---
 
 # Intro

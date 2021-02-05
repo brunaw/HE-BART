@@ -1,0 +1,327 @@
+---
+title: "BHM Parameter selection dashboard"
+output:  
+  flexdashboard::flex_dashboard:
+    theme: lumen
+    background: pink
+    orientation: columns
+    vertical_layout: scroll
+    horizontal_layout: scroll
+    runtime: shiny
+runtime: shiny
+---
+  
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+posteriors <- function(params, tau_p = NULL, 
+                       mu_j_p = NULL,
+                       mu_p = NULL){
+  N <- params$N
+  nj <- params$nj
+  k <- params$k
+  beta <- params$beta
+  alpha <- params$alpha
+  group <- params$group
+  mu_j <- params$mu_j
+  tau <- params$tau
+  tau_mu <- params$tau_mu
+  mu_main <- params$mu_main
+  y <- params$y
+  m <-  length(mu_j)
+  
+  if(!is.null(tau_p)){
+    #alpha_tau <- (N + m)/2 + alpha
+    alpha_tau <- N/2 + alpha
+    term_mu <- c()
+    term_mu_j <- c()
+    for(j in unique(group)){
+      y_j <- y[group == j]
+      term_mu[j] <- sum((y_j - mu_j[j])^2)
+      term_mu_j[j] <- (mu_j[j] - mu_main)^2
+    }
+    
+    
+    beta_tau <- sum(term_mu)/2 + beta + sum(term_mu_j)/(2 *k)
+    alpha_tau/beta_tau
+    
+    post <- dgamma(tau_p, alpha_tau, beta_tau)
+  }
+  
+  
+  if(!is.null(mu_j_p)){
+    mu_j_p <-  rep(mu_j_p, length(nj))
+    mean_mu <- c()
+    var_mu <- c()
+    
+    for(j in unique(group)){
+      y_bar_j <- mean(y[group == j]) 
+      #mean_mu[j] <- tau * ((mu_main/k) +  y_bar_j * nj[j])/(nj[j] + 1/k)
+      mean_mu[j] <- ((mu_main/k) +  y_bar_j * nj[j])/(nj[j] + 1/k)
+      var_mu[j] <- (1/(nj[j] + 1/k))* tau
+    }
+    post <- dnorm(mu_j_p, mean = mean_mu, sd = sqrt(var_mu))
+  } 
+  
+  if(!is.null(mu_p)){
+    mean_mu <- (tau/k) * mean(mu_j) * m / (tau_mu + (tau/k)*m)
+    #mean_mu <- ((1/k) * mean(mu_j))/ (tau_mu + (tau/k)*m)
+    var_mu <- (tau_mu + (tau/k)*m)^(-1)
+    post <- dnorm(mu_p, mean = mean_mu, sd = sqrt(var_mu))
+  } 
+  
+  return(list(post = post))
+  
+}
+
+```
+
+
+Fit
+=======================================================================
+Row {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+sliderInput("k_value", 
+            label = "K",
+            min = 0.001, 
+            max = 10, 
+            value = 0.5,
+            step = 0.2)
+
+sliderInput("M", 
+            label = "Number of groups",
+            min = 2, 
+            max = 15, 
+            value = 9,
+            step = 1)
+
+# sliderInput("tau_mu", 
+#             label = withMathJax("\\(\\tau_{\\mu}\\) slider"),
+#             min = 0.001, 
+#             max = 10, 
+#             value = 1,
+#             step = 0.3)
+
+sliderInput("mu_mu", 
+            label = withMathJax("\\(\\mu_{\\mu}\\) slider"),
+            min = -2, 
+            max = 2, 
+            value = 0.01,
+            step = 0.1)
+```
+
+
+```{r}
+# Simulation 
+
+fc <- reactive({
+  alpha = 0.5; beta = 1; 
+  mu_mu = input$mu_mu
+  #mu_mu = 0
+  #tau_mu = input$tau_mu 
+  k = input$k_value
+  
+  # Set the seed so this is repeatable
+  set.seed(2023)
+  # Some R code to simulate data from the above model
+  #M = 9 # Number of groups
+  M = input$M
+  tau = rgamma(n = 1, 1/alpha, beta)
+  tau_mu = k * tau 
+  mu_main = rnorm(n = 1, mu_mu, sd = sqrt(tau_mu))
+  mu_j = rnorm(n = M, mu_main, sd = k * (1/tau))
+  
+  nj = sample(50:300, M, replace = TRUE) # Set the number of obs in each group between 5 and 10
+  N = sum(nj)
+  group = rep(1:M, times = nj)
+  mu = rep(mu_j, nj)
+  y = rnorm(N, mean = mu, sd = sqrt(1/tau))
+  
+  params <- list(
+  N = N, mu_j  = mu_j, y = y, 
+  group = group, beta = beta, 
+  alpha = alpha, tau = tau, 
+  nj = nj,
+  tau_mu = tau_mu, 
+  mu_main = mu_main, k = k)
+  
+  df <- data.frame(
+  taus = seq(tau - 1, tau + 1, length.out = 1000), 
+  mu = seq(min(mu_j) - 1, max(mu_j) + 1, length.out = 1000)) %>% 
+  dplyr::rowwise() %>% 
+  dplyr::mutate(
+    density_tau = posteriors(tau_p = taus, params = params),
+    density_mu = posteriors(mu_j_p = mu, params = params),
+    density_mu_main = posteriors(mu_p = mu, params = params))
+  
+  
+  return(list(N = N, nj = nj, group = group, k = k, M = M, 
+              y = y, mu = mu, mu_main = mu_main, tau = tau, 
+              M = M, mu_j = mu_j, tau_mu = tau_mu, df = df))
+})
+
+
+
+```
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Boxplots
+
+```{r, eval = TRUE}
+output$chart1 <- renderPlot({
+  
+  y <- fc()$y
+  group <- fc()$group
+  mu <- fc()$mu
+  
+  data.frame(y = y, group = group, 
+             muj = mu) %>% 
+    ggplot(aes(y = y, x = group, group = group)) +
+    geom_boxplot(fill = "#CD5C5C", alpha = 0.8) +
+    geom_point(aes(y = mu), colour = '#0066ff', size = 3) +
+    theme_bw(18)
+  
+
+})
+
+
+plotOutput("chart1")
+
+```
+
+
+### Posterior (tau)
+
+```{r}
+output$chart2 <- renderPlot({
+    
+  y <- fc()$y
+  group <- fc()$group
+  mu <- fc()$mu
+  N <- fc()$N
+  nj <- fc()$nj
+  mu_main <- fc()$mu_main
+  mu_j <- fc()$mu_j
+  tau <- fc()$tau
+  k <- fc()$k
+  tau_mu <- fc()$tau_mu
+  df <- fc()$df 
+  
+  alpha = 0.5; beta = 1; mu_mu = 0
+
+df %>% 
+  ggplot(aes(x = taus, y = unlist(density_tau))) +
+  geom_line() +
+  theme_light(18) +
+  geom_vline(xintercept = tau, linetype = 2, 
+             colour = 'tomato', size = 0.65) +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 7)) +
+  labs(x = expression(tau), y = "Posterior density", 
+       title = expression("Posterior distribution for "~tau))
+
+
+})
+
+plotOutput("chart2")
+
+```
+
+
+### Posterior (mu_j)
+
+```{r, eval = TRUE}
+output$chart3 <- renderPlot({
+    
+  y <- fc()$y
+  group <- fc()$group
+  mu <- fc()$mu
+  M <- fc()$M
+  N <- fc()$N
+  nj <- fc()$nj
+  mu_main <- fc()$mu_main
+  mu_j <- fc()$mu_j
+  tau <- fc()$tau
+  k <- fc()$k
+  tau_mu <- fc()$tau_mu
+  df <- fc()$df 
+  
+  alpha = 0.5; beta = 1; mu_mu = 0
+  
+  mu_lims <- mu_j %>% 
+  map(~seq(.x -  0.5 * sqrt(k * (1/tau)), 
+           .x + 0.5 * sqrt(k * (1/tau)) , length.out = 1000)) %>% 
+  unlist()
+
+df$density_mu %>% 
+  map_df(as_tibble) %>% 
+  mutate(ind_mu = rep(1:length(nj), 1000), 
+         mu = rep(df$mu, each = M)) %>% 
+  arrange(ind_mu) %>% 
+  mutate(mu_lims = mu_lims) %>% 
+  group_by(ind_mu) %>% 
+  mutate(mu_min =  min(mu_lims), mu_max = max(mu_lims)) %>% 
+  ungroup() %>% 
+  filter(mu >= mu_min & mu <= mu_max) %>% 
+  ggplot(aes(x = mu, y = value)) +
+  geom_line() +
+  theme_light(18) +
+  facet_wrap(~ind_mu, scales = 'free') +
+  geom_vline(data = data.frame(mu_j = mu_j, 
+                               ind_mu = 1:M),
+             aes(xintercept = mu_j), linetype = 2, 
+             colour = 'tomato', size = 0.65) +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 5)) +
+  theme(axis.text.x = element_text(size = 12)) +
+  labs(x = expression(mu[j]), y = "Posterior density",
+       title = expression("Posterior distributions for "~mu[j]))
+
+})
+
+plotOutput("chart3")
+
+```
+
+
+### Posterior (mu)
+
+```{r, eval = TRUE}
+output$chart4 <- renderPlot({
+    
+  y <- fc()$y
+  group <- fc()$group
+  mu <- fc()$mu
+  M <- fc()$M
+  N <- fc()$N
+  nj <- fc()$nj
+  mu_main <- fc()$mu_main
+  mu_j <- fc()$mu_j
+  tau <- fc()$tau
+  k <- fc()$k
+  tau_mu <- fc()$tau_mu
+  df <- fc()$df 
+  
+  alpha = 0.5; beta = 1; mu_mu = 0
+df %>% 
+  ggplot(aes(x = mu, y = unlist(density_mu_main))) +
+  geom_line() +
+  theme_light(18) +
+  geom_vline(xintercept = mu_main, linetype = 2, 
+             colour = 'tomato', size = 0.65) +
+  xlim(-2 - tau_mu, 2 + tau_mu) +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
+  labs(x = expression(mu), y = "Posterior density",
+       title = expression("Posterior distribution for "~mu))
+})
+
+plotOutput("chart4")
+
+```
+
+

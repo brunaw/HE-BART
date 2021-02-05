@@ -1,0 +1,310 @@
+\PassOptionsToPackage{unicode=true}{hyperref} % options for packages loaded elsewhere
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames*,x11names*}{xcolor}
+%
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provides euro and other symbols
+\else % if luatex or xelatex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage[]{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{
+            colorlinks=true,
+            linkcolor=Maroon,
+            filecolor=Maroon,
+            citecolor=Blue,
+            urlcolor=blue,
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{float}
+\mathtoolsset{showonlyrefs}
+\floatplacement{figure}{H}
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}}
+
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+
+\title{  
+ \normalfont \normalsize 
+ \textsc{Mixed Models Theory}\\[25pt]
+\author{Bruna Wundervald}
+\date{\normalsize August, 2020}
+\rule{\linewidth}{2pt} \\[ .5cm]}
+
+\maketitle
+
+\vspace{\fill}
+
+\tableofcontents
+
+\rule{\linewidth}{1pt}
+
+\newpage
+
+\hypertarget{linear-mixed-models}{%
+\section{Linear Mixed Models}\label{linear-mixed-models}}
+
+\hypertarget{model-statement}{%
+\subsection{Model Statement}\label{model-statement}}
+
+A LMM for a set of observations \(y = (y_1, \dots, y_n)\) has the
+general form
+
+\begin{equation}
+Y | b \sim N(\mu, \Sigma), \quad \mu = X\beta + Zb, \quad b \sim N(0, \Sigma_{b}),
+\end{equation}
+
+where \(X\) and \(Z\) are the \(p \times n\) predictor matrices, and
+\(\Sigma = \sigma^2 I\) usually. An example for clustered data is:
+
+\begin{equation}
+Y_{ij} \sim N(\mu_{ij}, \Sigma), \quad \mu_{ij} = x^{T}_{ij} \beta + z^{T}_{ij} b, \quad b_i \sim N(0, \Sigma^{*}_{b}),
+\end{equation}
+
+where \(x_{ij}\) now contains the predictor values for the \(j\)-th
+observation in the \(i-\)th cluster, and \(z_{ij}\) is the sub-vector of
+\(x_{ij}\) that exhibits extra between cluster variation in its
+relationship to \(Y\).
+
+\hypertarget{example-from-the-lme4-paper}{%
+\subsubsection{\texorpdfstring{Example from the \texttt{lme4}
+paper}{Example from the lme4 paper}}\label{example-from-the-lme4-paper}}
+
+Let us consider now the data from a sleep deprivation study, from the
+\texttt{lme4} package paper. On day 0 the subjects had their normal
+amount of sleep, and were from that night restricted to 3 hours of sleep
+per night. The response variable represents the average reaction times
+in milliseconds (ms) on a series of tests done each day for each
+subject. In the following figure, we can see a general trend of the
+reaction time increasing with the passage of days, and the reaction time
+itself varies quite a lot between the subjects, in both slope (starting
+reaction time) and intercepts (effect of days in the reaction time).
+This type of study justifies the use of a LMM, as we can clear see that
+there is a difference in the response between individuals and days.
+
+\begin{figure}
+
+{\centering \includegraphics{mixed_models_files/figure-latex/unnamed-chunk-1-1} 
+
+}
+
+\caption{Reaction time per days and subjects in the sleep deprivation study.}\label{fig:unnamed-chunk-1}
+\end{figure}
+
+The following code starts by creating an LMM model using the subject ID
+as the random effect, for which the standard error is estimated as 37.12
+(26.01, 52.94). The second model now adds the Days variable a a random
+effect slope, meaning the random intercept and slope are correlated
+(-0.48, 0.68). In comparison to the previous model, the ICs for the
+fixed effects got smaller, given that now we have less uncertainty about
+the population average.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lmm <-}\StringTok{ }\KeywordTok{lmer}\NormalTok{(Reaction }\OperatorTok{~}\StringTok{ }\NormalTok{Days }\OperatorTok{+}\StringTok{ }\NormalTok{(}\DecValTok{1} \OperatorTok{|}\StringTok{ }\NormalTok{Subject), sleepstudy)}
+\KeywordTok{summary}\NormalTok{(lmm)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Linear mixed model fit by REML ['lmerMod']
+## Formula: Reaction ~ Days + (1 | Subject)
+##    Data: sleepstudy
+## 
+## REML criterion at convergence: 1786.5
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -3.2257 -0.5529  0.0109  0.5188  4.2506 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  Subject  (Intercept) 1378.2   37.12   
+##  Residual              960.5   30.99   
+## Number of obs: 180, groups:  Subject, 18
+## 
+## Fixed effects:
+##             Estimate Std. Error t value
+## (Intercept) 251.4051     9.7467   25.79
+## Days         10.4673     0.8042   13.02
+## 
+## Correlation of Fixed Effects:
+##      (Intr)
+## Days -0.371
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{round}\NormalTok{(}\KeywordTok{confint}\NormalTok{(lmm, }\DataTypeTok{oldNames =} \OtherTok{FALSE}\NormalTok{), }\DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                         2.5 % 97.5 %
+## sd_(Intercept)|Subject  26.01  52.94
+## sigma                   27.81  34.59
+## (Intercept)            231.99 270.82
+## Days                     8.89  12.05
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lmm_days <-}\StringTok{ }\KeywordTok{lmer}\NormalTok{(Reaction }\OperatorTok{~}\StringTok{ }\NormalTok{Days }\OperatorTok{+}\StringTok{ }\NormalTok{(Days }\OperatorTok{|}\StringTok{ }\NormalTok{Subject), sleepstudy)}
+\KeywordTok{summary}\NormalTok{(lmm_days)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Linear mixed model fit by REML ['lmerMod']
+## Formula: Reaction ~ Days + (Days | Subject)
+##    Data: sleepstudy
+## 
+## REML criterion at convergence: 1743.6
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -3.9536 -0.4634  0.0231  0.4633  5.1793 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev. Corr
+##  Subject  (Intercept) 611.90   24.737       
+##           Days         35.08    5.923   0.07
+##  Residual             654.94   25.592       
+## Number of obs: 180, groups:  Subject, 18
+## 
+## Fixed effects:
+##             Estimate Std. Error t value
+## (Intercept)  251.405      6.824  36.843
+## Days          10.467      1.546   6.771
+## 
+## Correlation of Fixed Effects:
+##      (Intr)
+## Days -0.138
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{round}\NormalTok{(}\KeywordTok{confint}\NormalTok{(lmm_days, }\DataTypeTok{oldNames =} \OtherTok{FALSE}\NormalTok{), }\DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                               2.5 % 97.5 %
+## sd_(Intercept)|Subject        14.38  37.71
+## cor_Days.(Intercept)|Subject  -0.48   0.68
+## sd_Days|Subject                3.80   8.75
+## sigma                         22.90  28.86
+## (Intercept)                  237.68 265.13
+## Days                           7.36  13.58
+\end{verbatim}
+
+\hypertarget{model-fitting}{%
+\subsection{Model Fitting}\label{model-fitting}}
+
+\hypertarget{bayesian-linear-mixed-models}{%
+\section{Bayesian Linear Mixed
+Models}\label{bayesian-linear-mixed-models}}
+
+A Bayesian version of the LMM is given by the use of prior distributions
+for \(\beta\), \(\Sigma\) and \(\Sigma_b\). In the Bayesian case, the
+distiction between random and fixed effects is less clear, as both
+\(\beta\) and \(b\) will have probability distributions \(f(\beta)\) and
+\(f(b) = \int f(b | \Sigma_b) f(\Sigma_b)d\Sigma_b\). The most common
+way of fitting the BLMM is based on a Gibbs sampler.
+
+\end{document}
