@@ -6,6 +6,7 @@
 rm(list = ls()) # Clear the workspace
 library(tidyverse)
 
+# This is based on the latest piece of maths 
 # Maths --------------------------------------------------------------
 
 # Description of the Bayesian model fitted in this file
@@ -16,33 +17,42 @@ library(tidyverse)
 # mu_j = mean for each group j
 # mu = mean for mu_j 
 # tau = inverse variance of y_ij
-# k = multiplication factor for the variance of mu_j 
+# k1 = multiplication factor for the variance of mu
+# k2 = multiplication factor for the variance of mu_j 
 
 # Likelihood:
 # y_{ij} ~ N(mu_j, tau^{-1})
 # Priors
-# mu_j ~ N(mu, k(tau^{-1}))
-# mu ~ N(0, tau_mu) 
+# mu_j ~ N(mu, k_2(tau^{-1}))
+# mu ~ N(0, k_2(tau^{-1})) 
 # tau ~ Gamma(alpha, beta)
-# alpha = 0.5, beta = 1, alpha = 0.2, beta = 1
 
 # Simulate data -----------------------------------------------------
-alpha = 0.5; beta = 1; mu_mu = 0; k = 2.5
+alpha = 0.5; beta = 1; mu_mu = 0; k1 = 1.5 ; k2 = 0.5
 
 # Set the seed so this is repeatable
 set.seed(2023)
 # Some R code to simulate data from the above model
 M = 9 # Number of groups
 tau = rgamma(n = 1, 1/alpha, beta)
-tau_mu = k*tau 
+tau_mu_j = k1 * (1/tau) 
+tau_mu = k2 * (1/tau) 
 mu_main = rnorm(n = 1, mu_mu, sd = sqrt(tau_mu))
-mu_j = rnorm(n = M, mu_main, sd = k * (1/tau))
+mu_j = rnorm(n = M, mu_main, sd = sqrt(tau_mu_j))
 
-nj = sample(50:300, M, replace = TRUE) # Set the number of obs in each group between 5 and 10
+nj = sample(50:750, M, replace = TRUE) # Set the number of obs in each group between 5 and 10
 N = sum(nj)
 group = rep(1:M, times = nj)
 mu = rep(mu_j, nj)
+#M1 = model.matrix(mu ~ factor(group) - 1)
 y = rnorm(N, mean = mu, sd = sqrt(1/tau))
+
+# var_y = (
+#   k1 * M1 %*% t(M1) + diag(1, length(mu), length(mu))) * (1/tau)
+# 
+# #var_y <- diag(diag(var_y))
+# 
+# y <- MASS::mvrnorm(n = 1, mu = rep(mu_main, N), Sigma = var_y)
 
 data.frame(y = y, group = group, 
            muj = mu) %>% 
@@ -60,38 +70,54 @@ data.frame(y = y, group = group, muj = mu) %>%
 
 # Useful functions --------------------------------------------------
 # Posteriors --- 
+
+params <- list(
+  N = N, mu_j  = mu_j, y = y, 
+  group = group, beta = beta, 
+  alpha = alpha, tau = tau, 
+  tau_mu = tau_mu, 
+  nj = nj,
+  mu_main = mu_main, k1 = k1, k2 = k2
+  # det_psi = det_psi,
+  # in_psi = in_psi, 
+  # psi = psi
+)
+
 posteriors <- function(params, tau_p = NULL, 
                        mu_j_p = NULL,
                        mu_p = NULL){
   N <- params$N
-  k <- params$k
+  k1 <- params$k1
+  k2 <- params$k2
   nj <- params$nj
   beta <- params$beta
   alpha <- params$alpha
   group <- params$group
   mu_j <- params$mu_j
   tau <- params$tau
-  tau_mu <- params$tau_mu
   mu_main <- params$mu_main
   y <- params$y
   m <-  length(mu_j)
+
   
   if(!is.null(tau_p)){
-  #alpha_tau <- (N + m)/2 + alpha
-    alpha_tau <- N/2 + alpha
-  term_mu <- c()
-  term_mu_j <- c()
-  for(j in unique(group)){
-    y_j <- y[group == j]
-    term_mu[j] <- sum((y_j - mu_j[j])^2)
-    term_mu_j[j] <- (mu_j[j] - mu_main)^2
-  }
-  
-  
-  beta_tau <- sum(term_mu)/2 + beta + sum(term_mu_j)/(2 *k)
-  alpha_tau/beta_tau
-  
-  post <- dgamma(tau_p, alpha_tau, beta_tau)
+    #alpha_tau <- (N + m)/2 + alpha
+    alpha_tau <- (N + m + 1)/2 + alpha
+    term_mu <- c()
+    term_mu_j <- c()
+    
+    for(j in unique(group)){
+      y_j <- y[group == j]
+      term_mu[j] <- sum((y_j - mu_j[j])^2)
+      term_mu_j[j] <- (mu_j[j] - mu_main)^2
+    }
+    
+    
+    beta_tau <- (sum(term_mu)/2 + beta + 
+                   sum(term_mu_j)/(2 * k1) + (mu_main^2)/(2 * k2))
+
+    # 8192.516
+    post <- dgamma(tau_p, alpha_tau, beta_tau)
   }
   
   
@@ -99,20 +125,19 @@ posteriors <- function(params, tau_p = NULL,
     mu_j_p <-  rep(mu_j_p, length(nj))
     mean_mu <- c()
     var_mu <- c()
-
+    
     for(j in unique(group)){
       y_bar_j <- mean(y[group == j]) 
-      #mean_mu[j] <- tau * ((mu_main/k) +  y_bar_j * nj[j])/(nj[j] + 1/k)
-      mean_mu[j] <- ((mu_main/k) +  y_bar_j * nj[j])/(nj[j] + 1/k)
-      var_mu[j] <- (1/(nj[j] + 1/k))* tau
+      mean_mu[j] <- ((mu_main/k1) +  y_bar_j * nj[j])/(nj[j] + 1/k1)
+      var_mu[j] <- (1/(nj[j] + 1/k1))* tau
     }
     post <- dnorm(mu_j_p, mean = mean_mu, sd = sqrt(var_mu))
   } 
   
   if(!is.null(mu_p)){
-    mean_mu <- (tau/k) * mean(mu_j) * m / (tau_mu + (tau/k)*m)
+    mean_mu <- (tau/k1) * mean(mu_j) * m / (tau *(m/k1 + 1/k2))
     #mean_mu <- ((1/k) * mean(mu_j))/ (tau_mu + (tau/k)*m)
-    var_mu <- (tau_mu + (tau/k)*m)^(-1)
+    var_mu <- (tau *(m/k1 + 1/k2))^(-1)
     post <- dnorm(mu_p, mean = mean_mu, sd = sqrt(var_mu))
   } 
   
@@ -123,18 +148,6 @@ posteriors <- function(params, tau_p = NULL,
 # psi <- (k + diag(N))
 # det_psi <- det(psi)
 # in_psi <- solve(psi)
-
-params <- list(
-  N = N, mu_j  = mu_j, y = y, 
-  group = group, beta = beta, 
-  alpha = alpha, tau = tau, 
-  tau_mu = tau_mu, 
-  nj = nj,
-  mu_main = mu_main, k = k
-  # det_psi = det_psi,
-  # in_psi = in_psi, 
-  # psi = psi
-)
 
 
 df <- data.frame(
@@ -157,22 +170,22 @@ df %>%
        title = expression("Posterior distribution for "~tau))
 # ggsave(file = "book2/img/post_tau.png")
 
-df$density_mu %>% 
+df$density_mu %>%
   map_df(as_tibble) %>%
-  mutate(ind_mu = rep(1:length(nj), times = 1000), 
+  mutate(ind_mu = rep(1:length(nj), times = 1000),
          mu = rep(df$mu, each = M)
-  ) %>% 
-  ungroup() %>% 
-  group_by(ind_mu) %>% 
-  filter(value == max(value)) %>% 
-  ungroup() %>% 
-  arrange(ind_mu) %>% 
-  mutate(mu_j = mu_j) %>% 
-  write.table("book2/mus.txt")
+  ) %>%
+  ungroup() %>%
+  group_by(ind_mu) %>%
+  filter(value == max(value)) %>%
+  ungroup() %>%
+  arrange(ind_mu) %>%
+  mutate(mu_j = mu_j)
+#  write.table("book2/mus.txt")
 
 mu_lims <- mu_j %>% 
-  map(~seq(.x -  0.3 * sqrt(k * (1/tau)), 
-           .x + 0.3 * sqrt(k * (1/tau)) , length.out = 1000)) %>% 
+  map(~seq(.x -  0.3 * sqrt(k2 * (1/tau)), 
+           .x + 0.3 * sqrt(k2 * (1/tau)) , length.out = 1000)) %>% 
   unlist()
 
 df$density_mu %>% 
@@ -211,22 +224,24 @@ df %>%
        title = expression("Posterior distribution for "~mu))
 # ggsave(file = "book2/img/post_mu.png")
 
-# Now using a smaller k ---------------------- 
-alpha = 0.5; beta = 1; mu_mu = 0; k = 0.5
+# Now using a smaller k1 ---------------------- 
+alpha = 0.5; beta = 1; mu_mu = 0; k1 = 0.5 ; k2 = 0.2
 
 # Set the seed so this is repeatable
 set.seed(2023)
 # Some R code to simulate data from the above model
 M = 9 # Number of groups
 tau = rgamma(n = 1, 1/alpha, beta)
-tau_mu = k * tau
+tau_mu_j = k1 * (1/tau) 
+tau_mu = k2 * (1/tau) 
 mu_main = rnorm(n = 1, mu_mu, sd = sqrt(tau_mu))
-mu_j = rnorm(n = M, mu_main, sd = k * (1/tau))
+mu_j = rnorm(n = M, mu_main, sd = sqrt(tau_mu_j))
 
-nj = sample(100:300, M, replace = TRUE) # Set the number of obs in each group between 5 and 10
+nj = sample(50:750, M, replace = TRUE) # Set the number of obs in each group between 5 and 10
 N = sum(nj)
 group = rep(1:M, times = nj)
 mu = rep(mu_j, nj)
+#M1 = model.matrix(mu ~ factor(group) - 1)
 y = rnorm(N, mean = mu, sd = sqrt(1/tau))
 
 data.frame(y = y, group = group, 
@@ -249,7 +264,7 @@ params <- list(
   alpha = alpha, tau = tau, 
   nj = nj, 
   tau_mu = tau_mu, 
-  mu_main = mu_main, k = k
+  mu_main = mu_main, k1 = k1, k2 = k2
 )
 
 df <- data.frame(
@@ -287,8 +302,8 @@ df$density_mu %>%
 
 
 mu_lims <- mu_j %>% 
-  map(~seq(.x -  0.5 * sqrt(k * (1/tau)), 
-           .x + 0.5 * sqrt(k * (1/tau)) , length.out = 1000)) %>% 
+  map(~seq(.x -  0.5 * sqrt(k1 * (1/tau)), 
+           .x + 0.5 * sqrt(k1 * (1/tau)) , length.out = 1000)) %>% 
   unlist()
 
 df$density_mu %>% 
