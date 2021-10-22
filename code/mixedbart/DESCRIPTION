@@ -1,0 +1,21 @@
+Package: mybcart
+Title: My mixed-bcart code
+Type: Package
+Version: 0.1.0
+Author: Bruna Wundervald
+Maintainer: Bruna Wundervald <brunadaviesw@gmail.com>
+Description: This package is a very slow implementation of the b-cart model, for didatic purposes. 
+Depends: R (>= 3.2.4)
+URL: https://github.com/brunaw
+BugReports: https://github.com/brunaw
+License: GPL-2
+Encoding: UTF-8
+LazyData: TRUE
+RoxygenNote: 7.1.1
+Imports: magrittr,
+    dplyr,
+    rlang,
+    stringr,
+    invgamma,
+    stats,
+    progress

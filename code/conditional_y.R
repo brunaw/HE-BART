@@ -17,6 +17,7 @@ mu = rep(mu_j, nj)
 #M1 = model.matrix(mu ~ factor(group) - 1)
 y = rnorm(N, mean = mu, sd = sqrt(1/tau))
 
+# Add explicit 
 M_mat <- model.matrix(mu ~ factor(group) - 1)
 psi <- (k1 * M_mat %*% t(M_mat)) + diag(N)
 det_psi <- det(psi)

@@ -78,9 +78,6 @@ params <- list(
   tau_mu = tau_mu, 
   nj = nj,
   mu_main = mu_main, k1 = k1, k2 = k2
-  # det_psi = det_psi,
-  # in_psi = in_psi, 
-  # psi = psi
 )
 
 posteriors <- function(params, tau_p = NULL, 
