@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>An Introduction to BART and Hierarchical BART</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Bruna Wundervald," />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <script src="libs/clipboard/clipboard.min.js"></script>
+    <link href="libs/shareon/shareon.min.css" rel="stylesheet" />
+    <script src="libs/shareon/shareon.min.js"></script>
+    <link href="libs/xaringanExtra-shareagain/shareagain.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-shareagain/shareagain.js"></script>
+    <script src="libs/js-cookie/js.cookie.js"></script>
+    <script src="libs/peerjs/peerjs.min.js"></script>
+    <script src="libs/tiny.toast/toast.min.js"></script>
+    <link href="libs/xaringanExtra-broadcast/broadcast.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-broadcast/broadcast.js"></script>
+    <link rel="stylesheet" href="assets/css/my-theme.css" type="text/css" />
+    <link rel="stylesheet" href="assets/css/my-fonts.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+
+
+
+class: title-slide, center, middle
+
+
+
+
+# An Introduction to BART and Hierarchical BART
+
+## Bruna Wundervald,
+
+### National University of Ireland, Maynooth
+### December, 2021
+
+&lt;img src="images/main_tree.png" width="300"&gt;
+
+
+
+
+---
+
+name: clouds
+class: center, middle
+background-image: url(images/forest.png)
+background-size: cover
+
+&lt;style type="text/css"&gt;
+.panelset {
+  --panel-tab-font-family: Work Sans;
+  --panel-tab-background-color-active: #fffbe0;
+  --panel-tab-border-color-active: #023d4d;
+}
+
+.panelset .panel-tabs .panel-tab &gt; a {
+	color: #023d4d;
+}
+&lt;/style&gt;
+
+
+## .big-text[Hello]
+
+
+## Bruna Wundervald
+
+&lt;img style="border-radius: 50%;" src="https://avatars.githubusercontent.com/u/18500161?s=460&amp;u=34b7f4888b6fe48b3c208beb51c69c146ae050cf&amp;v=4" width="150px"/&gt;
+
+[GitHub: @brunaw](https://github.com/brunaw)  
+[Twitter: @bwundervald](https://twitter.com/bwundervald)  
+[Page: http://brunaw.com/](http://brunaw.com/)
+
+
+---
+
+
+class: bottom, middle, inverse
+
+# Roadmap
+
+- BCART
+- BART
+- Hierarchical BART
+
+
+---
+
+
+class: bottom, left, inverse
+
+# BCART
+
+
+
+---
+
+
+class: bottom, left
+
+# BCART
+
+- A tree-based algorithm that puts prior beliefs into:
+  - the structure of the tree,
+  - the node parameters 
+
+- Main components: 
+  - a tree `\(\mathcal{T}\)` with `\(b\)` terminal nodes, 
+  - a parameter set `\(\Theta = (\theta_1,\dots,\theta_b)\)` that 
+  associates each parameter `\(\theta_i\)` with the `\(i\)`th terminal node.
+
+---
+
+class: middle, left
+
+# BCART
+
+- Proposes a full probability model for the data: 
+&gt; combines a prior distribution `\(P(\mathcal{T})\)` for the tree structure with a likelihood
+`\(P(\mathcal{D} | \mathcal{T})\)`, `\(D =\{(X_i, Y_i): 1 \leq i \leq N \}\)`. 
+
+
+---
+
+class: middle, left
+
+# BCART
+
+...with that, we have 
+
+`$$Y_i \equiv (y_{i1}, \dots, y_{in_i})',$$`
+
+where `\(i\)` represents the `\(i\)`th node ( `\(i = 1, \dots, b\)`, `\(X\)` and `\(X_i\)` are analogous).  
+
+
+Conditionally
+on `\((\Theta, \mathcal{T})\)`, the values of `\(y\)` in a node are i.i.d., and 
+across terminal nodes they are independent: 
+
+`$$P(Y | X, \Theta, \mathcal{T}) = \prod_{i = 1}^{b}f(Y_i | \Theta_i) = \prod_{i = 1}^{b} \prod_{j = 1}^{n_i}f(y_{ij} | \theta_i)$$`
+
+---
+
+class: middle, left
+
+# BCART
+
+
+ We specify  a prior probability distribution `\(P(\Theta, \mathcal{T})\)`
+ using the relationship: 
+
+$$P(\Theta, \mathcal{T}) = P(\Theta | \mathcal{T}) P(\mathcal{T}) $$
+
+- `\(P(\mathcal{T})\)`: does not have a close form, but can defined as 
+
+`$$P(\mathcal{T}) = \prod_{\eta \in \mathcal{H}\text{Ter}} (1 - P_{SPLIT}(\eta ))\prod_{\eta \in \mathcal{H}\text{Int}} 
+P_{SPLIT}(\eta ) 
+\prod_{\eta \in \mathcal{H}\text{Int}} 
+P_{RULE}(\rho | \eta )$$`
+
+where  `\(\mathcal{H}\text{Ter}\)`= terminal nodes and
+`\(\mathcal{H}\text{Int}\)` = internal nodes. 
+
+
+---
+
+class: middle, left
+
+# BCART
+
+  
+  - `\(P_{SPLIT}(\eta, \mathcal{T})\)`: probability of splitting the 
+  terminal node `\(\eta\)`; 
+    - depends on the depth of `\(\eta\)`
+  
+  - `\(P_{RULE}(\rho | \eta, \mathcal{T})\)`: probability of splitting 
+  at a rule `\(\rho\)` in terminal node `\(\eta\)`; 
+    - depends on the number of available predictors and their range of available values of the node of `\(\eta\)`
+  
+
+
+
+---
+
+class: middle, center
+    
+# Gibbs sampling
+    
+
+&lt;img src="https://raw.githubusercontent.com/chi-feng/mcmc-demo/master/docs/rwmh.gif" width="550" height="350"/&gt;
+    
+
+
+---
+
+class: middle, left
+
+# BART
+
+- A sum-of-trees ensemble:
+
+`$$\mathbf{Y} = f(\mathbf{X}) + \mathbf{\epsilon} \approx \mathcal{T_1}^{P}(\mathbf{X}) + \dots + \mathcal{T_p}^{P}(\mathbf{X}) + \mathbf{\epsilon}, \mathbf{\epsilon} \sim \mathcal{N_n}(\mathbf{0}, \tau^{-1}\mathbf{I}_n)$$`
+
+Where `\(P\)` = number of distinct trees, each composed of a tree 
+structure  `\(\mathcal{T}\)`, and terminal node parameters `\(M\)`
+
+`$$P(\mathcal{T_1}^{P},\dots,\mathcal{T_p}^{P}, \tau ) = \Big[\prod_{t}\prod_{\mathcal{l}} P(\mu_{t, l} | \mathcal{T_t}) P(\mathcal{T_t}) \Big] P(\tau)$$`
+
+
+
+---
+
+
+class: bottom, left, inverse
+
+# BART
+
+
+---
+
+class: middle, left
+
+# BART
+
+
+A Metropolis-within-Gibbs sampler (Gelman and Gelman 1984; Hastings 1970)
+generates posterior draws from `\(P(\mathcal{T_1^{M}},\dots,\mathcal{T_m^{M}}, \tau | \mathbf{y})\)`.
+
+- “Bayesian backfitting” (Hastie and Tibshirani 2000): the `\(j\)`th tree 
+is fit iteratively, 
+holding all other `\(m − 1\)` trees constant by exposing only the residual 
+response that remains unfitted:
+
+`$$\mathbf{R_{-j}} := \mathbf{y} - \sum_{t \neq j} \mathcal{T}_t^{P}(\mathbf{X})$$`
+
+
+---
+
+
+class: bottom, left, inverse
+
+# Hierachical BART
+
+
+---
+
+class: middle, left
+
+# Hierachical BART
+
+- A version of BART where we have a 'group' information for
+each obeservation
+
+`$$Y_{ij} = \sum_{p = 1}^{P} \mathbb{G}(X_{ij}, T_{p}, \Theta_{p}) + \epsilon_{ij}$$`
+for observation `\(i = i, \dots, n_j\)` in group `\(j = 1, \dots, J\)`
+
+---
+
+class: middle, left
+
+## Hierachical BART
+
+`$$\epsilon_{ij} \sim N(0, \tau^{-1})$$`
+
+where `\(\tau^{-1}\)` is the residual precision
+
+- `\(\Theta_{p}\)`: terminal node parameters + the individual group parameters for tree `\(p\)`:  
+
+
+---
+
+class: middle, left
+
+## Hierachical BART
+
+`$$\underset{\sim}{R_j} \sim N(\mu_j, \tau^{-1}),$$`
+
+
+`$$\mu_{jpl} \sim N(\mu, k_1\tau^{-1}/P),$$`
+
+
+`$$\mu_{pl} \sim N(0, k_2 \tau^{-1}/P)$$`
+
+with `\(l = 1, \dots, n_{p}\)`, where `\(n_{p}\)` is the number of nodes in tree p, and `\(\sum_{p = 1}^{P} n_p = N_p\)`. 
+
+
+
+
+---
+
+class: middle, left
+
+# Hierachical BART
+
+
+- `\(k_1\)`: `\(\mu_{jpl}\)` precision scaling parameter
+
+- `\(k_2\)`: `\(\mu_{pl}\)` precision scaling parameter
+
+
+
+---
+
+class: middle, left
+
+## Posteriors 
+
+`\begin{equation}
+\mu | \dots \sim N(
+\frac{\mathbf{1}^{T} \Psi^{-1} R }{\mathbf{1}^{T} \Psi^{-1} \mathbf{1} + (k_2/P)^{-1}},
+\tau^{-1} (\mathbf{1}^{T} \Psi^{-1} \mathbf{1} + (k_2/P)^{-1})), 
+\end{equation}`
+
+`\begin{equation}
+\mu_j | \dots \sim MVN( 
+\frac{P \mu /k_1 + \bar R_j n_j}{(n_j + P/k_1)}, 
+\tau^{-1} (n_j + P/k_1))
+\end{equation}`
+
+where `\(\Psi =  k_1 MM^{T} + \mathbb{I}\)`, `\(\bar R_j n_j\)` = residual mean, 
+`\(n_j\)` = # obs per group 
+
+---
+
+class: middle, left
+
+## Posteriors 
+
+`$$\tau | \dots \sim Ga(\frac{N + J N_p + N_p}{2} + \alpha, \\
+\frac{\sum_{i= 1}^{N}(y_i - \hat f_i)^2}{2} + \frac{P \sum_{j, l, p}(\mu_{j, l, p} - \mu_{l, p})^2}{2 k_1} + \frac{P \sum_{l, p}\mu_{l, p}^2}{2 k_2} + \beta)$$`
+
+
+
+
+---
+
+class: middle, center
+
+
+&lt;img src="predictions.png" width="75%" /&gt;
+
+
+---
+
+class: middle, center
+
+
+&lt;img src="tau.png" width="75%" /&gt;
+
+
+---
+
+class: middle, left
+
+# Resources
+
+
+---
+
+
+
+
+
+---
+class: middle
+
+# References
+
+&lt;p&gt;&lt;cite&gt;Chipman, H. A., E. I. George, and R. E. McCulloch
+(1998).
+&amp;ldquo;Bayesian CART model search&amp;rdquo;.
+In: &lt;em&gt;Journal of the American Statistical Association&lt;/em&gt;.
+ISSN: 1537274X.
+DOI: &lt;a href="https://doi.org/10.1080/01621459.1998.10473750"&gt;10.1080/01621459.1998.10473750&lt;/a&gt;.&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;cite&gt;&amp;mdash;
+(2010).
+&amp;ldquo;BART: Bayesian additive regression trees&amp;rdquo;.
+In: &lt;em&gt;Annals of Applied Statistics&lt;/em&gt;.
+ISSN: 19326157.
+DOI: &lt;a href="https://doi.org/10.1214/09-AOAS285"&gt;10.1214/09-AOAS285&lt;/a&gt;.
+eprint: 0806.3286.&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;cite&gt;Kapelner, A. and J. Bleich
+(2016).
+&amp;ldquo;bartMachine: Machine Learning with Bayesian Additive Regression Trees&amp;rdquo;.
+In: &lt;em&gt;Journal of Statistical Software&lt;/em&gt; 70.4, pp. 1&amp;ndash;40.
+DOI: &lt;a href="https://doi.org/10.18637/jss.v070.i04"&gt;10.18637/jss.v070.i04&lt;/a&gt;.&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;cite&gt;R Core Team
+(2018).
+&lt;em&gt;R: A Language and Environment for Statistical Computing&lt;/em&gt;.
+R Foundation for Statistical Computing.
+Vienna, Austria.
+URL: &lt;a href="https://www.R-project.org/"&gt;https://www.R-project.org/&lt;/a&gt;.&lt;/cite&gt;&lt;/p&gt;
+
+
+
+---
+background-image: url(images/forest.png)
+background-size: cover
+class: center, middle, inverse
+
+# .big-text[Questions?]
+
+
+
+---
+
+
+class: bottom, left, inverse
+
+*An Introduction to BART and Hierarchical BART*,
+
+Bruna Wundervald 
+
+# Thank you!
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "solarized-light",
+"highlightLanguage": ["r", "css", "yaml"],
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

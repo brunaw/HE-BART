@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css?family=DM+Mono&display=swap');
+
+@import url('https://fonts.googleapis.com/css?family=Libre+Baskerville:300,400,500,900&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Work+Sans&display=swap');
+
+body { 
+  font-family: 'Work Sans', sans-serif;
+  font-weight: 400;
+  font-size: 25px;
+  color: #000000;
+}
+
+h1 {
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 500;
+  color: #355E3B;
+}
+
+h2 {
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 300;
+  color: #355E3B;
+}
+
+h3 {
+  font-family: 'Work Sans', sans-serif;
+  text-transform: uppercase;
+  font-weight: 300;
+  color: #355E3B;
+  font-size: 1.3em !important;
+}
+
+h4, h5, h6 {
+  font-family: 'Work Sans', sans-serif;
+  font-weight: 400;
+  color: #355E3B;
+}
+
+.remark-code,
+.remark-inline-code{ 
+  font-family: 'DM Mono', monospace;
+}
+
+@media print {
+  body {
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 400;
+}

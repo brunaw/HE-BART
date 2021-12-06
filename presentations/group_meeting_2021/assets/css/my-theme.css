@@ -1,0 +1,429 @@
+
+
+.remark-slide-content p, ul, ol, li {
+  font-size: 2.15rem;
+}
+
+.remark-slide-content {
+  background-color: #ffffff;
+}
+
+.remark-slide-content h1 {
+	margin-bottom: 0.5em !important;
+}
+
+.footnote {
+	bottom: 1em;
+	font-size: 75%;
+}
+
+img {
+	margin-bottom: 1.5rem;
+	overflow: hidden;
+	/*background: #fff;*/
+}
+
+
+/* code */
+/* https://github.com/rstudio/blogdown/blob/master/docs/02-hugo.Rmd */
+
+pre {
+  border: 1px solid #fff;
+  box-shadow: 0px 0px 4px #79beee;
+  padding: 0.25em;
+  background-color: #fff;
+  overflow-x: auto;
+  border-radius: 0px; /*undo rounded corners*/
+}
+
+pre code { 
+  background: none; 
+  font-size: 1.8rem;
+}
+
+.hljs {
+	background: #fff !important;
+}
+
+.display {
+  font-weight: 700;
+  color: #E7553C;
+}
+
+
+/* link color */
+a, a > code {
+  color: #FFDAB9;
+}
+
+
+:any-link {
+    color: #FFDAB9;
+    text-decoration: underline;
+}
+
+
+/* mouse over link */
+a:hover, a:active, a:focus {
+    color: rgba(231,85,60,.8);
+    text-decoration: underline;
+}
+
+.remark-code {
+  color: #E7553C;
+  font-size: 1.25em;
+}
+
+.remark-inline-code { 
+  color: #355E3B;
+  font-size: 1em;
+}
+
+.remark-code-line-highlighted { 
+  background-color:  #bed3eca1; 
+}
+
+/* darken up code and results */
+
+.hljs-solarized-light .hljs {
+  color: #2B3D43; 
+}
+
+.inverse {
+  background-color: #E4D00A;
+  color: #355E3B;
+  text-shadow: none;
+  font-size: 2.3em;
+}
+
+.inverse h1, .inverse h2, .inverse h3 {
+	color: #355E3B;
+	font-weight: 500;
+	font-size: 1em;
+}
+
+
+.inverse .remark-inline-code {
+  color: #F1BB7B;
+}
+
+
+
+/* Two-column layout */
+.left-column {
+  color: #777;
+  width: 30%;
+  height: 92%;
+  float: left;
+  font-size: 18px;
+}
+
+.left-column h2:last-of-type, .left-column h3:last-child {
+  color: #000;
+}
+
+.left-column1 {
+  color: #777;
+  width: 34%;
+  height: 92%;
+  float: left;
+  font-size: 18px;
+}
+
+.right-column {
+  width: 67%;
+  float: right;
+  padding-top: 0em;
+}
+
+.right-column1 {
+  width: 63%;
+  float: right;
+  padding-top: 0em;
+}
+
+.pull-left {
+  float: left;
+  width: 47%;
+}
+.pull-right {
+  float: right;
+  width: 47%;
+}
+.pull-right ~ * {
+  clear: both;
+}
+
+img, video, iframe {
+  max-width: 100%;
+}
+blockquote {
+  border-left: solid 5px lightgray;
+  padding-left: 1em;
+}
+table {
+  margin: auto;
+  border-top: 1px solid #666;
+  border-bottom: 1px solid #666;
+}
+table thead th { border-bottom: 1px solid #ddd; }
+th, td { padding: 5px; }
+thead, tfoot, tr:nth-child(even) { background: #eee }
+
+@page { margin: 0; }
+
+.title-slide {
+  background-position: 52% 5%;
+  background-size: 43%;
+  background-color: #E4D00A;
+}
+
+
+.title-slide h1 {
+  font-family: 'Libre Baskerville', serif;
+  color: #355E3B;
+  font-size: 2.7em;
+  word-wrap: break-word;
+  letter-spacing: 1pt;
+  font-weight: 550;
+  margin-bottom: -10px !important;
+}
+
+.title-slide h2 {
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 500;
+  font-size: 1.35em;
+  color: #355E3B;
+  text-shadow: none;
+  margin-bottom: 0px !important;
+}
+
+.title-slide h3 {
+  font-family: 'Work Sans', sans-serif;
+  font-weight: 400;
+  font-size: 1.3em;
+  color: #355E3B;
+  text-transform: none;
+}
+
+.title-slide a {
+  color: #fff;
+}
+
+/* Wider cols */
+
+.right-wide {
+  width: 60%;
+  float: right;
+  padding-top: 1em;
+}
+
+.left-narrow {
+  width: 40%;
+  float: left;
+  padding-top: 1em;
+}
+
+.left-wide {
+  width: 60%;
+  float: left;
+  padding-top: 1em;
+}
+
+.right-narrow {
+  width: 40%;
+  float: right;
+  padding-top: 1em;
+}
+
+/* footer */
+
+div.my-footer {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    height: 20px;
+    width: 100%;
+}
+
+div.my-footer span {
+    font-size: 10pt;
+    color: #ffffff;
+    position: absolute;
+    left: 15px;
+    bottom: 2px;
+}
+
+a.footer-link {
+    position: absolute;
+    bottom: 5px;
+    right: 50px;
+    height: 40px;
+    width: 150px;
+    font-size: 16px;
+    color: #023d4d;
+}
+
+/* your turns */
+
+.your-turn {
+  background-color: #447099;
+  color: #fff;
+}
+
+.your-turn a {
+  color: #fff!important;
+}
+
+.your-turn a:hover,
+.your-turn a:active {
+  color: #f1fa8c!important;
+}
+
+
+.your-turn h1 {
+  color: #fff;
+  font-size: 3.5em;
+}
+
+.your-turn .arcade {
+  color: #8be9fd!important;
+}
+
+
+/* live code */
+
+.live-code {
+  background-color: #000;
+  color: #fff;
+}
+
+.live-code h1 {
+  color: #fff;
+  text-shadow: 1px 1px 2px #1f5386;
+  font-size: 3.5em;
+}
+
+
+.your-turn .remark-inline-code,
+.live-code .remark-inline-code {
+  color: #f1fa8c;
+}
+
+.codedrop .remark-code {
+  background-color: #6272a4!important;
+}
+
+.codedrop .remark-code-line-highlighted { 
+  background-color:  #8be9fdbf; 
+}
+
+/* darken dracula comments */
+.codedrop .hljs-comment,
+.codedrop .hljs-meta {
+	color: #282a36;
+}
+
+
+/* --------------Even split- 3 columns--------------- */
+
+.flex {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.column {
+  float: left;
+  width: 25%;
+  text-align: center;
+}
+
+
+/*-------*/
+
+
+.columns {
+  display: flex;
+}
+
+.left-col {
+  width: 33%;
+  text-align: left;
+}
+
+.middle-col {
+  width: 33%;
+  text-align: left;
+  padding-left: 20px;
+}
+
+.right-col {
+  width: 33%;
+  text-align: left;
+  padding-left: 20px;
+}
+
+
+/* Headers, body */
+
+h4 {
+  font-size: 1.8em;
+}
+
+.emphasis {
+  font-family: 'Kalam';
+  font-weight: normal;
+}
+
+.big-text {
+  font-size: 2.8em !important;
+}
+
+.shadow-text {
+  text-shadow: 2px 2px 0.5em black;
+  color: #fff;
+}
+
+.remark-code-line-highlighted {
+  color: #E7553CFF;
+  background-color: transparent;
+}
+
+
+.hidden{
+  visibility: hidden;
+}
+
+.word-bubble {
+  font-family: 'Libre Baskerville';
+  font-size: 1.2em;
+}
+
+
+/* https://github.com/yihui/xaringan/wiki/Progressbar */
+.remark-slide-number {
+  position: inherit;
+}
+
+.remark-slide-number .progress-bar-container {
+  position: absolute;
+  bottom: 0;
+  height: 8px;
+  display: block;
+  left: 0;
+  right: 0;
+}
+
+.remark-slide-number .progress-bar {
+  height: 100%;
+  background-color: #79beee;
+}
+
+.title-slide .remark-slide-number .progress-bar-container {
+  height: 0px;
+}
+
+hr {
+  color: #023d4d80;
+}
