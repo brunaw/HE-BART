@@ -173,7 +173,7 @@ class: middle, left
 
 $$P(\Theta, \mathcal{T}) = P(\Theta | \mathcal{T}) P(\mathcal{T}) $$
 
-- $P(\mathcal{T})$: does not have a close form, but can defined as 
+- $P(\mathcal{T})$: does not have a closed form, but can be defined as: 
 
 $$P(\mathcal{T}) = \prod_{\eta \in \mathcal{H}\text{Ter}} (1 - P_{SPLIT}(\eta ))\prod_{\eta \in \mathcal{H}\text{Int}} 
 P_{SPLIT}(\eta ) 
@@ -197,21 +197,15 @@ class: middle, left
   
   - $P_{RULE}(\rho | \eta, \mathcal{T})$: probability of splitting 
   at a rule $\rho$ in terminal node $\eta$; 
-    - depends on the number of available predictors and their range of available values of the node of $\eta$
+    - depends on the number of available predictors and their range of available values in the node $\eta$
   
-
-
 
 ---
 
-class: middle, center
-    
-# Gibbs sampling
-    
 
-<img src="https://raw.githubusercontent.com/chi-feng/mcmc-demo/master/docs/rwmh.gif" width="550" height="350"/>
-    
+class: bottom, left, inverse
 
+# BART
 
 ---
 
@@ -224,18 +218,11 @@ class: middle, left
 $$\mathbf{Y} = f(\mathbf{X}) + \mathbf{\epsilon} \approx \mathcal{T_1}^{P}(\mathbf{X}) + \dots + \mathcal{T_p}^{P}(\mathbf{X}) + \mathbf{\epsilon}, \mathbf{\epsilon} \sim \mathcal{N_n}(\mathbf{0}, \tau^{-1}\mathbf{I}_n)$$
 
 Where $P$ = number of distinct trees, each composed of a tree 
-structure  $\mathcal{T}$, and terminal node parameters $M$
+structure  $\mathcal{T}$
 
 $$P(\mathcal{T_1}^{P},\dots,\mathcal{T_p}^{P}, \tau ) = \Big[\prod_{t}\prod_{\mathcal{l}} P(\mu_{t, l} | \mathcal{T_t}) P(\mathcal{T_t}) \Big] P(\tau)$$
 
 
-
----
-
-
-class: bottom, left, inverse
-
-# BART
 
 
 ---
@@ -246,14 +233,26 @@ class: middle, left
 
 
 A Metropolis-within-Gibbs sampler (Gelman and Gelman 1984; Hastings 1970)
-generates posterior draws from $P(\mathcal{T_1^{M}},\dots,\mathcal{T_m^{M}}, \tau | \mathbf{y})$.
+generates posterior draws from
+$P(\mathcal{T_1}^{P},\dots,\mathcal{T_p}^{P}, \tau | \mathbf{y})$.
 
 - “Bayesian backfitting” (Hastie and Tibshirani 2000): the $j$th tree 
 is fit iteratively, 
-holding all other $m − 1$ trees constant by exposing only the residual 
+holding all other $P − 1$ trees constant by exposing only the residual 
 response that remains unfitted:
 
 $$\mathbf{R_{-j}} := \mathbf{y} - \sum_{t \neq j} \mathcal{T}_t^{P}(\mathbf{X})$$
+
+---
+
+class: middle, center
+    
+# Gibbs sampling
+    
+
+<img src="https://raw.githubusercontent.com/chi-feng/mcmc-demo/master/docs/rwmh.gif" width="550" height="350"/>
+    
+
 
 
 ---
@@ -339,7 +338,7 @@ class: middle, left
 \tau^{-1} (n_j + P/k_1))
 \end{equation}
 
-where $\Psi =  k_1 MM^{T} + \mathbb{I}$, $\bar R_j n_j$ = residual mean, 
+where $\Psi =  k_1 MM^{T} + \mathbb{I}$, $\bar R_j$ = residual mean, 
 $n_j$ = # obs per group 
 
 ---
