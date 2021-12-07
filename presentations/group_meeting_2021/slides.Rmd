@@ -383,16 +383,6 @@ knitr::include_graphics("tau.png")
 ```
 
 
----
-
-class: middle, left
-
-# Resources
-
-
----
-
-
 
 
 
