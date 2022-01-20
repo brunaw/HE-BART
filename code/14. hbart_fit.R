@@ -525,17 +525,17 @@ wages %>%
 wages %>% glimpse()
 table(wages$id) # 888 IDs
 n_distinct(wages$id)
-first_50 <- unique(wages$id)[1:50]
+first_50 <- unique(wages$id)[1:75]
 # Get 50 ids 
 wages <- wages %>% filter(id %in% first_50)
 dim(wages) # 363 rows --- 
 names(wages)[2] <- "y"
 #formula <- y ~  black + unemploy_rate + ged +  high_grade + xp
-formula <- y ~  xp + unemploy_rate
+formula <- y ~  xp + unemploy_rate + high_grade  
 group_variable <-  "id"
 
 data_split <-   wages %>% 
-  mutate(split = ifelse(runif(n()) < 0.75, "train", "test")) %>% 
+  mutate(split = ifelse(runif(n()) < 0.85, "train", "test")) %>% 
   split(.$split)
 
 train <- data_split$train %>% select(-split)
@@ -544,7 +544,7 @@ test <- data_split$test %>% select(-split)
 # Takes a while --------
 m0_real <- bart(formula, 
                 dataset = train,
-                iter = 50, 
+                iter = 100, 
                 P = 10, 
                 group_variable, pars, 
                 min_u = 0, max_u = 20,
@@ -557,11 +557,18 @@ m0_real <- bart(formula,
 #   map(drop_na)
 # res
 # m0_real$final_trees$results
-pred_m0 <- predict_hbm(model = m0_real, newdata = train, formula = formula,
+m0_real$final_trees$results
+test <- test %>% slice(-29, -62)
+pred_m0 <- predict_hbm(model = m0_real, newdata = test, formula = formula,
                        group_variable = group_variable) 
 
 plot(pred_m0$y, pred_m0$pred)
 rss(pred_m0$y, pred_m0$pred)
+
+pred_m0_t <- predict_hbm(model = m0_real, newdata = train, formula = formula,
+                       group_variable = group_variable)
+rss(pred_m0_t$y, pred_m0_t$pred)
+
 #some trees have not grown; remove
 #-------------------------------------------------------------------------
 
@@ -569,6 +576,7 @@ lm3_m0 <- lmer(y ~ xp + unemploy_rate + (1 |id), data = train)
 pred_lm3_m0 <- predict(lm3_m0, test)
 pred_lm3_m0_train <- predict(lm3_m0)
 rss(pred_lm3_m0_train, train$y)
+rss(pred_lm3_m0, test$y)
 #-------------------------------------------------------------------------
 # Friedman data
 df <- sim_friedman_bart(n = 500, j = 10)
