@@ -13,7 +13,7 @@
 grow_tree <- function(current_tree, selec_var, drawn_node, rule){
   current_tree %>%
     dplyr::mutate(
-      # Increasing the depth of the node giving the grow
+      # Increasing the depth of the node 
       d =  ifelse(node == drawn_node, d + 1, d),
       # Updating the parent of the split node
       parent = ifelse(node == drawn_node, drawn_node, parent),
@@ -22,7 +22,7 @@ grow_tree <- function(current_tree, selec_var, drawn_node, rule){
         node == drawn_node,
         ifelse(!!rlang::sym(selec_var) > rule, "left", "right"), "no split"),
       
-      # Updating the node accordingly to the new split
+      # Updating the node with the new split
       node = ifelse(node == drawn_node,
                     ifelse(!!rlang::sym(selec_var) > rule,
                            paste(node, selec_var, "left"),
@@ -56,12 +56,13 @@ grow_tree <- function(current_tree, selec_var, drawn_node, rule){
 #' transition_ratio_grow(tree, current_node)
 transition_ratio_grow <- function(tree, current_node, p,
                                   current_selec_var, results_f, 
-                                  p_grow){
+                                  p_grow, i){
 
   #p_grow = 0.5
+  p_grow = 0.95
   p_prune = 1 - p_grow
-  # Number of available final nodes to break -------
-  b <-  tree %>% dplyr::distinct(node_index) %>% nrow()
+  # Number of available final nodes to split on -------
+  b <-  length(unique(tree$node_index))
 
   # Probability of splitting (n variables) ------------
   p_adj <-  1/p
@@ -79,7 +80,8 @@ transition_ratio_grow <- function(tree, current_node, p,
 
   #  Probability of transitioning from the new tree
   # back to the original -------------------------
-  w_2 <-  nrow(results_f)
+  #w_2 <-  nrow(results_f)
+  w_2 <- i
   p_tstar_to_t <- p_prune/w_2
 
   trans_ratio <- log(p_t_to_tstar/p_tstar_to_t)
@@ -114,24 +116,7 @@ inv2 <- function(k_1, k_2, M) {
 
 
 # Full parent conditional -----------------------------
-cond_calculation <- function(data_cond, error = 0, pars){
-  # y <- data_cond$y
-  # M_mat <- stats::model.matrix(y ~ factor(group) - 1, data_cond)
-  # N <- nrow(data_cond)
-  # psi <- (k1 * M_mat %*% t(M_mat)) + diag(N)
-  # W_0 <- rep(mu_mu, N)
-  # W_1 <- (k2 * diag(x = 1, nrow = N, ncol = 1) %*%
-  #           t(diag(x = 1, nrow = N, ncol = 1))) + psi
-  # 
-  # inner <- error/2 + beta
-  # p_cond_y <- (-1/2) *
-  #   log(det(W_1)) + (log(inner)*(-(N/2 + alpha))) +
-  #   lgamma(N/2 + alpha)
-  
-  # error <- data_cond %>% 
-  #   mutate(error = (y - mu_js_sampled)^2) %>% 
-  #   summarise(error = sum(error)) %>% 
-  #   pull(error)
+cond_calculation <- function(data_cond, pars){
   
   M <- model.matrix(~ factor(data_cond$group) - 1)
   y <- data_cond$y
@@ -142,108 +127,36 @@ cond_calculation <- function(data_cond, error = 0, pars){
   beta = pars$beta
   
   n <- nrow(M)
-  #n <- 1
   W_0 <- rep(mu_mu, n)
   ymW_0 <- y - W_0
   
   term_1 <- -(n/2)*log(2*pi)
   term_2 <- - 0.5 * det2(k_1_d = k_1, k_2_d = k_2, M_d = M)
   term_3 <- lgamma(n/2 + alpha)
-  
   term_4 <- - (n/2 + alpha)*log(0.5 * t(ymW_0)%*%inv2(k_1, k_2, M)%*%ymW_0 + beta)
-  #term_4 <- - (n/2 + alpha)*log(0.5 * error + beta)
-  #p_cond_y <- term_1 + term_3 + term_2 + term_4
   p_cond_y <- term_1 + term_4 + term_2 + term_3
-  
+  p_cond_y
 }
 
 
 
 lk_ratio_grow <- function(tree, current_node, pars){
   
-  filtered_tree <- tree %>% 
-    dplyr::filter(parent == current_node)
-
-  # The first node is on the left, the second is on the right,
-  # meaning that the left node has the smaller index --------
-
-  # # Counting how many observations are in each
-  # # region (left and right) ---------------------------------
-  # nl_nr <-  filtered_tree %>%
-  #   dplyr::count(node_index) %>%
-  #   dplyr::arrange(n) %>%
-  #   dplyr::pull(n)
-  #
-  # # Counting how many observations are in each group and node
-  # # region (left and right) ---------------------------------
-  # n_group_node <-  filtered_tree %>%
-  #   dplyr::count(group, node_index)
-  #
-  # # Calculating the sums of y in each region ----------------
-  # sums_nodes <- filtered_tree %>%
-  #   dplyr::group_by(node_index) %>%
-  #   dplyr::summarise(sum = sum(y)) %>%
-  #   dplyr::arrange(node_index) %>%
-  #   dplyr::pull(sum)
-
-
-  # beta <- pars$beta
-  # alpha <- pars$alpha
-  # mu_mu <- pars$mu_mu
-  # k1 <- pars$k1
-  # k2 <- pars$k2
-  
-  #---------------------------------------------
-  # Conditional split by node
-  # split_node <- filtered_tree %>%
-  #   split(.$criteria)
-  # 
-  
-  # error_y <- filtered_tree %>%
-  #   dplyr::mutate(err_y = (y - mu_js_sampled)^2) %>%
-  #   dplyr::summarise(sum_errors_y = sum(err_y))
-
-  #n_nodes <- n_distinct(filtered_tree$node)
+  filtered_tree <- tree %>% dplyr::filter(parent == current_node)
   cond_parent <- cond_calculation(data_cond = filtered_tree, pars = pars)
 
   nam <- unique(filtered_tree$node)
   cond_node <- 0
   
-  for(i in 1:length(nam)){
+  for(name in  nam){
     data_set <- tree %>% 
-      filter(node == nam[i])
-    marg <- cond_calculation(data_set, pars = pars)
+      dplyr::filter(node == name)
+    marg <- cond_calculation(data_cond = data_set, pars = pars)
     cond_node <- marg + cond_node
   }
   
   lk_ratio <-  cond_node - cond_parent
   
-
-  # exp(lk_ratio) # exploded
-  # # Calculating the equation of the lk. ratio ---------------
-  # first_term <- log(sqrt(
-  #   ((sigma_2_y*(sigma_2_y + sigma_2_mu * sum(nl_nr)))/
-  #      ((sigma_2_y + sigma_2_mu * nl_nr[1])*
-  #      (sigma_2_y + sigma_2_mu * nl_nr[2]))
-  #   )
-  # ))
-  #
-  # # Exponential part -----------------------------------------
-  # first_term_exp <- sigma_2_mu/(2*sigma_2_y)
-  # # Left node is in the first position of the objects
-  # second_term_exp <- (sums_nodes[1]^2)/(sigma_2_y + nl_nr[1] * sigma_2_mu)
-  # # Right node is in the second position of the objects
-  # third_term_exp <- (sums_nodes[2]^2)/(sigma_2_y + nl_nr[2] * sigma_2_mu)
-  #
-  # fourth_term_exp <- (sum(sums_nodes)^2)/(sigma_2_y + sum(nl_nr) * sigma_2_mu)
-  #
-  #
-  # # The exponential part
-  # # check if the - sign is there or not
-  # exp_part <- first_term_exp *
-  #   (second_term_exp + third_term_exp - fourth_term_exp)
-  #
-  # lk_ratio <- exp_part + first_term
   return(lk_ratio)
 }
 
@@ -320,14 +233,12 @@ structure_ratio_grow <- function(tree, current_node,
 #' ratio_grow(tree, current_node, sigma_2_mu, sigma_2)
 
 ratio_grow <- function(tree, current_node,
-                       pars,
-                       p, current_selec_var,
-                       results_f,
-                       p_grow){
+                       pars, p, current_selec_var,
+                       i, p_grow){
   # All ratios:
   trans <- transition_ratio_grow(tree, current_node,
                                  current_selec_var = current_selec_var,
-                                 p = p, results_f = results_f,
+                                 p = p, i = i,
                                  p_grow = p_grow)
   
   lk <- lk_ratio_grow(tree, current_node, pars)

@@ -33,49 +33,51 @@ marg2 <- function(y, k_1, k_2, M, mu_mu, alpha, beta) {
   return(all)
 }
 
-calc_all <- function(current_tree, new_k1, pars){
 
-  nam <- unique(current_tree$node)
-  tot_lik <- 0
-  for(i in 1:length(nam)){
-    data_set <- current_tree %>% 
-      filter(node == nam[i])
-    M <- model.matrix(~ factor(data_set$group) - 1)
-    marg <- marg2(y = data_set$y, 
-                       k_1 = new_k1, 
-                       k_2 = pars$k2, 
-                       M = M, 
-                       mu_mu = pars$mu_mu, 
-                       alpha = pars$alpha, 
-                       beta = pars$beta)
-    tot_lik <- marg + tot_lik
-  }
+marg2_hbart <- function(y, k_1, k_2, M, mu_mu, alpha, beta) {
+  n <- nrow(M)
+  W_0 <- rep(mu_mu, n)
+  ymW_0 <- y - W_0
+  
+  term_1 <- -(n/2)*log(2*pi)
+  term_2 <- - 0.5 * det2(k_1_d = k_1, k_2_d = k_2, M_d = M)
+  term_3 <- lgamma(n/2 + alpha)
+  
+  term_4 <- - (n/2 + alpha)*log(0.5 * t(ymW_0)%*%inv2(k_1, k_2, M)%*%ymW_0 + beta)
+  all <- term_1 + term_3 + term_2 + term_4
+  
+  return(all)
+}
+
+calc_all_hbart <- function(current_tree_mh, new_k1, pars){
+  
+  res <- current_tree_mh %>% 
+    dplyr::select(tree_index, y, sampled_mu_j, group) %>% 
+    mutate(rn = row_number()) %>% 
+    pivot_wider(names_from = tree_index, values_from = sampled_mu_j) %>% 
+    select(-rn) %>% 
+    mutate(pred = rowSums(.[3:ncol(.)]))
+  
+  # nam <- unique(current_tree$node)
+  # tot_lik <- 0
+  # for(i in 1:length(nam)){
+  #   data_set <- current_tree %>% 
+  #     filter(node == nam[i])
+    M <- model.matrix(~ factor(res$group) - 1)
+    tot_lik <- marg2_hbart(y = res$y, 
+                        k_1 = new_k1, 
+                        k_2 = pars$k2, 
+                        M = M, 
+                        mu_mu = pars$mu_mu, 
+                        alpha = pars$alpha, 
+                        beta = pars$beta)
+    #tot_lik <- marg + tot_lik
+  #}
   
   return(tot_lik)
   
 }
 
-
-MH_update <- function(
-  current_tree = current_tree, 
-  prior = prior_k1, min_u = min_u, max_u = max_u, pars = pars) {
-  
-  new_k1 <- runif(1, min = min_u, max = max_u) # Or rnorm or whatever else you want to propose
-  current <- calc_all(current_tree, pars$k1, pars)
-  candidate <- calc_all(current_tree, new_k1, pars)
-  
-  if(prior == TRUE){
-    prior_current <- dweibull(pars$k1, shape = 7, 10, log = TRUE)
-    prior_candidate <- dweibull(new_k1, shape = 7, 10, log = TRUE)
-    log.alpha <- candidate - current + prior_candidate - prior_current # ll is the log likelihood, lprior the log prior
-  } else {
-    log.alpha <- candidate - current  
-  }  
-  
-  accept <- log.alpha >= 0 || log.alpha >= log(runif(1))
-  theta <- ifelse(accept, new_k1, pars$k1)
-  return(theta)
-}
 
 
 #' @name lk_ratio_k

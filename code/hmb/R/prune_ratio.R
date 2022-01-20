@@ -9,9 +9,9 @@
 #' @param nodes_to_prune The two nodes (left and right) to be pruned
 #' @return The new tree
 #' @example
-#' prune_tree()
-prune_tree <- function(current_tree, drawn_node, variable_in_question,
-                       nodes_to_prune){
+
+prune_tree <- function(current_tree, drawn_node, variable_in_question){
+  nodes_to_prune <- stringr::str_remove(drawn_node, '( right| left)$')
   # Updating the node that will suffer the prune (returning
   # to the point where it was before the growing)
   new_node <- stringr::str_remove(nodes_to_prune, '( X[0-9])$')
@@ -76,21 +76,22 @@ prune_tree <- function(current_tree, drawn_node, variable_in_question,
 #' transition_ratio_prune(tree, current_node)
 
 transition_ratio_prune <- function(old_tree,
-                                   tree, current_node, p,
-                                   var_in_prune, results_f, 
+                                   tree, current_node, p_split,
+                                   var_in_prune, i, 
                                    p_grow){
   #p_grow = 0.5
   p_prune = 1 - p_grow
   # Number of available final nodes to prune -------
-  b <-  old_tree %>% dplyr::distinct(node_index) %>% nrow()
+  b <-  dplyr::n_distinct(old_tree$node_index)
+  
   # Number of internal nodes  -----------------------
-  w_2 <-  nrow(results_f)
+  w_2 <- i
   # Probability of pruning -------------------------
   p_t_to_tstar <- p_prune/w_2
 
   # Probability of splitting a variable ------------
-  p_adj <- p
-
+  p_adj <- p_split
+  
   # Available values to split ----------------------
   # Using the variable that was used in the node
   # selected for prune
@@ -130,79 +131,44 @@ transition_ratio_prune <- function(old_tree,
 lk_ratio_prune <- function(old_tree, tree, current_node, pars,
                            nodes_to_prune){
 
-  beta <- pars$beta
-  alpha <- pars$alpha
-  mu_mu <- pars$mu_mu
-  k1 <- pars$k1
-  k2 <- pars$k2
-
-  filtered_tree <- old_tree %>%
-    dplyr::filter(stringr::str_detect(node, nodes_to_prune)) %>%
-    dplyr::mutate(node =
-                    ifelse(
-                      stringr::str_detect(node, paste0(nodes_to_prune, " left")),
-                      paste0(nodes_to_prune, " left"),
-                      paste0(nodes_to_prune, " right")
-                    ))
-
+  # filtered_tree <- old_tree %>%
+  #   dplyr::filter(stringr::str_detect(node, nodes_to_prune)) %>%
+  #   dplyr::mutate(node =
+  #                   ifelse(
+  #                     stringr::str_detect(node, paste0(nodes_to_prune, " left")),
+  #                     paste0(nodes_to_prune, " left"),
+  #                     paste0(nodes_to_prune, " right")
+  #                   ))
   # The first node is on the left, the second is on the right,
   # meaning that the left node has the smaller index --------
 
-
-  cond_calculation <- function(data_cond, error){
-    y <- data_cond$y
-    M_mat <- stats::model.matrix(y ~ factor(group) - 1, data_cond)
-    N <- nrow(data_cond)
-    psi <- (k1 * M_mat %*% t(M_mat)) + diag(N)
-    W_0 <- rep(mu_mu, N)
-    W_1 <- (k2 * diag(x = 1, nrow = N, ncol = 1) %*%
-              t(diag(x = 1, nrow = N, ncol = 1))) + psi
-    #in_W_1 <- solve(W_1)
-    #inner <- (t((y - W_0)) %*% in_W_1 %*% (y - W_0))/2 + beta
-    inner <- error/2 + beta
-    p_cond_y <- (-1/2) *
-      log(det(W_1)) + (log(inner)*(-(N/2 + alpha))) +
-      lgamma(N/2 + alpha)
-    p_cond_y
+  
+  #cond_parent <- cond_calculation(data_cond = tree, pars = pars)
+  #tree_b <- tree %>% filter()
+  nam <- unique(tree$node)
+  cond_new <- 0
+  
+  for(name in  nam){
+    data_set <- tree %>% 
+      dplyr::filter(node == name)
+    marg <- cond_calculation(data_cond = data_set, pars = pars)
+    cond_new <- marg + cond_new
   }
   
-  #---------------------------------------------
-  # Conditional split by node
-  split_node <- filtered_tree %>%
-    split(.$criteria)
+  nam <- unique(old_tree$node)
+  cond_parent <- 0
   
-  error_y <- filtered_tree %>% 
-    dplyr::mutate(err_y = (y - mu_js_sampled)^2) %>%
-    dplyr::summarise(sum_errors_y = sum(err_y))
-  
-  cond_parent <- cond_calculation(filtered_tree, error_y$sum_errors_y)
-  
-  if(length(names(split_node)) == 1){
-    errors_y <- split_node$`no split` %>% 
-      dplyr::mutate(err_y = (y - mu_js_sampled)^2) %>%
-      dplyr::summarise(sum_errors_y = sum(err_y))
-    
-    cond_node <- cond_calculation(data_cond = split_node$`no split`,
-                                  error = errors_y$sum_errors_y)
-  } else {
-    errors_y_left <- split_node$left %>% 
-      dplyr::mutate(err_y = (y - mu_js_sampled)^2) %>%
-      dplyr::summarise(sum_errors_y = sum(err_y))
-    
-    errors_y_right <- split_node$right %>% 
-      dplyr::mutate(err_y = (y - mu_js_sampled)^2) %>%
-      dplyr::summarise(sum_errors_y = sum(err_y))
-    
-    
-    cond_node_left <- cond_calculation(data_cond = split_node$left,
-                                       error = errors_y_left$sum_errors_y)
-    cond_node_right <- cond_calculation(split_node$right,
-                                        error = errors_y_right$sum_errors_y)
-    cond_node <- cond_node_left + cond_node_right
+  for(name in  nam){
+    data_set <- old_tree %>% 
+      dplyr::filter(node == name)
+    marg <- cond_calculation(data_cond = data_set, pars = pars)
+    cond_parent <- marg + cond_parent
   }
   
-  lk_ratio <- cond_parent - cond_node
-
+  
+  lk_ratio <-  cond_new - cond_parent
+  
+  
   return(lk_ratio)
 }
 
@@ -231,12 +197,12 @@ lk_ratio_prune <- function(old_tree, tree, current_node, pars,
 #' structure_ratio_prune(tree, current_node)
 
 structure_ratio_prune <- function(old_tree, tree, current_node,
-                                  var_in_prune, p){
-
+                                  var_in_prune, p_split){
+  
   # Finding the probability of selecting one
   # available predictor -------------------------------------
-  p_adj <- 1/p
-
+  p_adj <- 1/p_split
+  
   # Counting the distinct rule options from
   # the pruned predictor ----------------------------------
   n_j_adj <-  old_tree %>%
@@ -280,18 +246,21 @@ structure_ratio_prune <- function(old_tree, tree, current_node,
 #' @example
 #' ratio_prune(tree, current_node, sigma_2_mu, sigma_2)
 
+
+
 ratio_prune <- function(old_tree, tree, current_node, pars,
-                        p, var_in_prune, nodes_to_prune,
-                        results_f, mu_res_cond, p_grow){
+                        p_split, var_in_prune, nodes_to_prune,
+                        i, mu_res_cond, p_grow){
   # All ratios:
   trans <- transition_ratio_prune(old_tree, tree, current_node,
                                   var_in_prune = var_in_prune,
-                                  p = p, results_f = results_f, 
+                                  p_split = p_split, i = i, 
                                   p_grow = p_grow)
+  
   lk <- lk_ratio_prune(old_tree, tree, current_node, pars = pars,
                        nodes_to_prune = nodes_to_prune)
   struct <- structure_ratio_prune(old_tree, tree, current_node, var_in_prune,
-                                  p = p)
+                                  p_split = p_split)
 
   r <- min(1, exp(trans+lk+struct))
   return(r)
