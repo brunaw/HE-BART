@@ -3,7 +3,7 @@ all_data <- readRDS("data/all_data.rds")
 data_k1 <- readRDS("data/data_k1.rds")
 library(tidyverse)
 files <- list.files("code/hmb/R") %>% 
-  paste0("code/mixedbart/R/", .)
+  paste0("code/hmb/R/", .)
 
 map(files[-5], source)
 

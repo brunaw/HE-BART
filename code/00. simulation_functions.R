@@ -73,7 +73,7 @@ sim_stump <- function(m, n = 1000, k1 = 8 ){
   return(list(data = data, tau = tau)) 
 }
 
-sim_bart <- function(n, k1 = 8, m = 10, k2 = 5){
+sim_bart <- function(n, k1 = 8, m = 10, k2 = 5, P = 10){
   alpha = 0.5; beta = 1; mu_mu = 0; 
   alloc <- sample(1:m, size = n, replace = TRUE)
   X1 <- runif(n)
@@ -84,6 +84,8 @@ sim_bart <- function(n, k1 = 8, m = 10, k2 = 5){
   muj_2 <- rnorm(m, mu[2], sqrt(k1/tau))
   
   y <- y2 <- c()
+  sp <- runif(1, min(X1)+0.07, max(X1)-0.07)
+  sim_y <- function(sp){
   for(i in 1:n) {
     curr_mean <- if(X1[i] < 0.5) { muj_1
     } else { muj_2 }
@@ -94,9 +96,11 @@ sim_bart <- function(n, k1 = 8, m = 10, k2 = 5){
     curr_mean <- muj_1
     y2[i] <- rnorm(1, curr_mean[alloc[i]], sd = sqrt(1/tau))
   }
+    y 
+  }
   
   data <- data.frame(X1, y, group = alloc) 
-  return(list(data = data, tau = tau, y2 = y2, 
+  return(list(data = data, tau = tau, 
               mu = mu, muj_1 = muj_1, muj_2 = muj_2)) 
 }
 
@@ -139,4 +143,42 @@ sim_friedman_bart = function(n, scale_err = 2, j = 10) {
   
   df <- data.frame(y, X, group = alloc)
   return(df)
+}
+
+
+sim_bart_add <- function(n, k1 = 8, m = 10, k2 = 5, P = 10){
+  alpha = 0.5; beta = 1; mu_mu = 0; 
+  alloc <- sample(1:m, size = n, replace = TRUE)
+  X1 <- runif(n)
+  tau <- rgamma(1, 1/alpha, beta) # 1.29
+  mu <- rnorm(2, mu_mu, sqrt(k2/tau)/P)
+  
+  muj_1 <- rnorm(m, mu[1], sqrt(k1/tau)/P)
+  muj_2 <- rnorm(m, mu[2], sqrt(k1/tau)/P)
+  
+  y <- y2 <- c()
+  
+  sim_y <- function(X1 = X1){
+    
+    sp <- runif(1, min(X1)+0.07, max(X1)-0.07)
+    
+    for(i in 1:n) {
+      curr_mean <- if(X1[i] < sp) { muj_1
+      } else { muj_2 }
+      y[i] <- rnorm(1, curr_mean[alloc[i]], sd = sqrt(1/tau))
+    }
+    
+    for(i in 1:n) {
+      curr_mean <- muj_1
+      y2[i] <- rnorm(1, curr_mean[alloc[i]], sd = sqrt(1/tau))
+    }
+    y 
+  }
+  
+  pp <- replicate(P, sim_y(X1))
+  y <- rowSums(pp)
+  
+  data <- data.frame(X1, y, group = alloc) 
+  return(list(data = data, tau = tau, 
+              mu = mu, muj_1 = muj_1, muj_2 = muj_2)) 
 }

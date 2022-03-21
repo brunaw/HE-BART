@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Hierarchical Embedded Bayesian Additive Regression Trees</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Bruna Wundervald" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/my-theme.css" type="text/css" />
+    <link rel="stylesheet" href="css/my-fonts.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+class: title-slide, center, bottom
+
+
+# Hierarchical Embedded Bayesian Additive Regression Trees
+
+## (HE-BART)
+
+### Bruna Wundervald &amp;#183; Ph.D. Candidate in Statistics
+
+#### Hamilton Institute &amp;#183; March, 2022
+
+---
+name: hello
+class: inverse, left, middle
+
+
+# Summary 
+  - Grouped data 
+  - Intro to BART 
+  - HE-BART
+  - Results 
+  - Conclusions &amp; comments 
+
+
+---
+
+
+# Grouped/hierachical data 
+.pull-left[
+
+- Observations are aggregated into groups
+- Usually there is an **intra-group variance** that needs
+to be accounted for  (non-independence)
+- Examples include:
+  - Clinical data (repeated measures per patient)
+  - Longitudinal data 
+  - Block design
+  - ...
+
+]
+
+.pull-right[
+
+&lt;img src="img/faces.jpeg" width="90%" style="display: block; margin: auto;" /&gt;
+
+]
+
+---
+
+# Bayesian Additive Regression Trees (BART)
+
+- A tree-based algorithm that allows us 
+to introduce prior beliefs into the structure of the tree
+
+- Models the response variable `\(y\)` as 
+
+`$$\Large y = \sum_{p=1}^P g(X, \mathcal{T}_p, \Theta_p, \mu_p) + \epsilon$$`
+
+where `\(g(...)\)` represents the tree look-up function and P is the number of trees
+  
+Chipman, Hugh A., Edward I. George, and Robert E. McCulloch. BART: Bayesian additive regression trees. _The Annals of Applied Statistics 4_, no. 1 (2010): 266-298.
+
+
+---
+
+## BART
+
+- It's a sum of Normal distributions where
+each location parameter is modeled by a 
+tree-structure 
+
+- Each tree is 'fit' on the residuals of
+the previous ones 
+
+&lt;img src="img/sum-trees.png" width="100%" style="display: block; margin: auto;" /&gt;
+
+- It can be
+  - A mean-shift model: location parameters change across nodes
+  - A mean-variance shift model: dispersion parameters also change
+  across nodes
+  
+
+---
+
+## BART
+
+The full Bayesian setting attributes probability
+distributions to all parameters
+  
+- `\(\Theta\)`: location and dispersion parameters
+    - `\(\mu\)` is often taken as `\(\mu \sim N(\mu_{\mu}, \tau_{\mu})\)`
+    - `\(\tau\)` is often taken as `\(\tau \sim \text{Ga}(\alpha, \beta)\)`
+  
+- Tree structures `\(\mathcal{T}\)`:
+    - Probability of splitting on a new node `\(P_{SPLIT}(\eta, \mathcal{T})\)`.
+    - Probability of splitting on a certain rule `\(P_{RULE}(\rho | \eta, \mathcal{T})\)`
+  
+
+
+
+---
+
+## BART
+
+&gt; Pros 
+  - Highly flexible
+  - Capture non-linearities between
+  covariates and between response-covariates
+  - Competitive even with Neural Networks 
+  
+&gt; Cons 
+  - Can be slow 
+  - Doesn't have **many** algorithm options yet 
+
+
+---
+
+
+# Hierachical Embedded BART
+
+-  Merges the ideas from Bayesian hierarchical modeling (REF) and linear mixed-effects models (Pinheiro &amp; Bates, 2000) with BART
+
+`$$y_{ij} = \sum_{p = 1}^{P} \mathbf{G}(X_{ij}; \mathcal{T}_{p}, \Theta_{p}) + \epsilon_{ij}$$`
+
+- Introduces to `\(\Theta_{p}\)`: 
+  - Intra-group `\(\mu_j\)` location parameters, where j is the group index
+  - `\(k_1\)`, which scales `\(\tau\)` up to a value that captures
+the intra-group residual precision
+  - `\(k_2\)`, which scales `\(\tau\)` up to a value that captures
+the intra-node residual precision
+  
+
+---
+
+## Hierarchical Embedded BART
+
+- Allows us to have:
+  - a group-specific prediction for each node
+  - an overall node prediction 
+  
+- Predict whether we have or not the grouping information 
+- Fits Bayesian Additive Regression Trees to any kind of grouped data:
+   - longitudinal data, 
+   - repeated measures data, 
+   - multilevel data, 
+   - block design
+
+
+---
+
+## Priors 
+
+
+- Define `\(\underset{\sim}{R_j} =  \{R_{ij}, \dots, j = 1,\dots, J \}\)` as
+the full set of residuals for group `\(j\)`, then 
+
+`$$\underset{\sim}{R_j} \sim N(\mu_j, \tau^{-1})$$` 
+
+where: 
+
+- `\(\mu_j \sim N(\mu, k_1\tau^{-1}/P)\)`
+- `\(k_1 \sim \text{Weibull}(\lambda, \nu)\)`, where `\(\lambda\)` and `\(\nu\)` are fixed. 
+- `\(\mu \sim N(0, k_2 \tau^{-1}/P)\)`, `\(k_2\)` is kept fixed for now
+- `\(\tau \sim \text{Ga}(\alpha, \beta)\)`, where `\(\alpha\)` and `\(\beta\)` are fixed 
+
+
+---
+
+## Posteriors 
+
+- Using `\(\underset{\sim}{R_j} \sim MVN(0, \tau^{-1} (\Psi + k_2  \mathbf{1}\mathbf{1}^{T})))\)` and defining `\(\Psi =  k_1 MM^{T} + \mathbf{I}\)`, for 
+tree p we have 
+
+`$$\mu_p | \tau, k_1, k_2, \Psi , P\sim N\Big(
+\frac{\mathbf{1}^{T} \Psi^{-1} R_p }{\mathbf{1}^{T} \Psi^{-1} \mathbf{1} + (k_2/P)^{-1}}, 
+\tau^{-1} (\mathbf{1}^{T} \Psi^{-1} \mathbf{1} + (k_2/P)^{-1})\Big)$$`
+
+where 
+
+`$$\mu_{p, j} | \tau, k_1, n_j, P \sim  MVN\Big( 
+\frac{P \mu_p /k_1 + \bar R_{p, j} n_j}{(n_j + P/k_1)}, 
+\tau^{-1} (n_j + P/k_1)\Big)$$`
+
+
+
+---
+
+## Posteriors 
+
+
+`$$\tau | J,  N_{b}, \alpha, \beta, k_1, k_2, \dots 
+\sim Ga\Big(\frac{N + J N_{b_p} + N_{b_p}}{2} + \alpha, \\ \frac{\sum_{i= 1}^{N}(y_i - \hat f_i)^2}{2} + \frac{P \sum_{j, l, p}(\mu_{j, l, p} - \mu_{l, p})^2}{2 k_1} +\frac{P \sum_{l, p}\mu_{l, p}^2}{2 k_2} + \beta\Big)$$`
+
+where `\(\hat f_{i}\)` is 
+the overall prediction for observation `\(y_{i}\)` and 
+`\(N_{b}\)` is the total number of terminal nodes `\(b\)`
+
+## Fitting
+
+- Bayesian backfitting -- each tree is fit on the residuals of the previous ones
+- `\(\tau\)`, `\(\mu_j\)` and `\(\mu\)` have closed-form posteriors
+
+- `\(k_1\)` and the tree structures are sampled via Metropolis-Hastings  
+
+
+---
+
+
+## Simulated data
+
+- y = sum of random tree structures with known parameters
+- One covariate x `\(\sim \text{Unif}(0, 1)\)`, n = 500, J  = 10
+
+&lt;img src="img/sim_data.png" width="55%" style="display: block; margin: auto;" /&gt;
+
+
+
+---
+
+
+## Simulated data - results 
+
+.pull-left[
+&lt;img src="img/sim_residuals.png" width="120%" style="display: block; margin: auto;" /&gt;
+
+]
+
+.pull_right[
+
+&lt;img src="img/sim_k1.png" width="30%" style="display: block; margin: auto;" /&gt;
+
+&lt;img src="img/sim_tau.png" width="30%" style="display: block; margin: auto;" /&gt;
+
+]
+
+
+---
+
+## Sleepstudy data 
+
+.pull-left[
+- First 10 days of a 18-subejct sleep study:
+  - response: average reaction time per day (in milliseconds), 
+  - covariate: is the number of days of sleep deprivation
+
+-  Two modeling scenarios:
+1. All 18 subjects present in the training set
+(80% train/20% test), 
+2. Subject IDs number 308, 309
+and 351 are not present in the training set (75% train/25% test).
+]
+
+
+.pull-right[
+
+&lt;img src="figs/unnamed-chunk-7-1.png" width="95%" style="display: block; margin: auto;" /&gt;
+
+] 
+
+---
+
+## All ids in training set 
+&lt;img src="img/predictions_plot.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## Missing ids 308, 309, and 351 in the training set 
+
+&lt;img src="img/predictions_plot_missing.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+
+---
+class: middle
+
+## Full RMSEs
+
+&lt;img src="img/rmse_table.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+# Conclusions
+
+- The model seems to be doing better than off-the-shelf algorithms 
+for grouped data 
+  - Flexibility of trees + intra-group predictions
+- We have a fully Bayesian setting 
+- We do not necessarily need the grouping information to make useful predictions 
+
+# Resources 
+
+- Code available at `https://github.com/brunaw/mixed_bart`
+- Paper available soon
+
+
+
+---
+
+# References
+
+&lt;p&gt;&lt;cite&gt;Chipman, H. A., E. I. George, and R. E. McCulloch
+(1998).
+&amp;ldquo;Bayesian CART model search&amp;rdquo;.
+In: &lt;em&gt;Journal of the American Statistical Association&lt;/em&gt; 93.443, pp. 935&amp;ndash;948.&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;cite&gt;&amp;mdash;
+(2010).
+&amp;ldquo;BART: Bayesian additive regression trees&amp;rdquo;.
+In: &lt;em&gt;The Annals of Applied Statistics&lt;/em&gt; 4.1, pp. 266&amp;ndash;298.&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;cite&gt;Hastie, T. and R. Tibshirani
+(2000).
+&amp;ldquo;Bayesian backfitting (with comments and a rejoinder by the authors&amp;rdquo;.
+In: &lt;em&gt;Statistical Science&lt;/em&gt; 15.3, pp. 196&amp;ndash;223.&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;cite&gt;Pinheiro, J. C. and D. M. Bates
+(2000).
+&amp;ldquo;Linear mixed-effects models: basic concepts and examples&amp;rdquo;.
+In: &lt;em&gt;Mixed-effects models in S and S-Plus&lt;/em&gt;, pp. 3&amp;ndash;56.&lt;/cite&gt;&lt;/p&gt;
+
+
+
+---
+
+class: inverse, center, middle
+
+
+# Thanks!
+
+
+
+&lt;img src= "https://s3.amazonaws.com/kleebtronics-media/img/icons/github-white.png", width="50", height="50",  align="middle"&gt; 
+
+&lt;b&gt;[@brunaw](https://github.com/brunaw)
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="https://platform.twitter.com/widgets.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "dracula",
+"highlightLanguage": ["r", "yaml", "markdown"],
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

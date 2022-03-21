@@ -50,19 +50,19 @@ marg2_hbart <- function(y, k_1, k_2, M, mu_mu, alpha, beta) {
 }
 
 calc_all_hbart <- function(current_tree_mh, new_k1, pars){
-  
+
   res <- current_tree_mh %>% 
     dplyr::select(tree_index, y, sampled_mu_j, group) %>% 
-    mutate(rn = row_number()) %>% 
-    pivot_wider(names_from = tree_index, values_from = sampled_mu_j) %>% 
-    select(-rn) %>% 
-    mutate(pred = rowSums(.[3:ncol(.)]))
+    tidyr::pivot_wider(names_from = tree_index, values_from = sampled_mu_j,
+                       values_fn = mean) %>% 
+    dplyr::mutate(pred = rowSums(.[3:ncol(.)]))
   
   # nam <- unique(current_tree$node)
   # tot_lik <- 0
   # for(i in 1:length(nam)){
   #   data_set <- current_tree %>% 
   #     filter(node == nam[i])
+  
     M <- model.matrix(~ factor(res$group) - 1)
     tot_lik <- marg2_hbart(y = res$y, 
                         k_1 = new_k1, 

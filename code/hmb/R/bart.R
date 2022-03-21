@@ -35,14 +35,14 @@
 #' Note: the error is calculated with the current mu_i for each node
 #'
 
-bart <- function(formula, dataset, iter = 5000, 
+bart <- function(formula, dataset, iter = 500, 
                  group_variable = 'group', 
                  pars,
                  scale = FALSE,
                  min_u = 0, max_u = 20, prior_k1 = TRUE, 
                  # BART parameters
                  P = 5,
-                 sample_k1 = TRUE
+                 sample_k1 = TRUE, burn_in = 50
                  ){
   
   options(dplyr.summarise.inform = FALSE)
@@ -51,7 +51,7 @@ bart <- function(formula, dataset, iter = 5000,
   #---------------------------------------------------------------------
   # Handling initial dataset
   #---------------------------------------------------------------------
-  results_data <- data_handler(formula, dataset, group_variable,
+  results_data <- data_handler(formula, data = dataset, group_variable,
                                scale_fc = FALSE)
   data <- results_data$data
   names(data)[names(data) == group_variable] <- "group"
@@ -69,6 +69,7 @@ bart <- function(formula, dataset, iter = 5000,
   #---------------------------------------------------------------------
   # Prior hyperparameters -------------
   J <- dplyr::n_distinct(group)
+  # attach(pars)
   beta <- pars$beta
   alpha <- pars$alpha
   mu_mu <- pars$mu_mu
@@ -124,19 +125,9 @@ bart <- function(formula, dataset, iter = 5000,
     # beta_grow <- 0.15
     # p_grow <-   alpha_grow*(1 + dn)^(-beta_grow)
    
-  # Decide to grow or not each tree
-  # Only grow for now 
-
-    #print(i)
-    #i = i + 1
-    
+  
   for(p in 1:P){  
     #print(p)
-    # Sampling a number from the uniform distribution
-    #to_do[i] <- stats::runif(1)
-    # Checking if the depths of the nodes are bigger than 0
-    #     (if 0, we can't prune the tree)
-    #depths <- sum(unique(my_trees[[i]]$d) > 0)
     
     # Growing, pruning or staying in the same tree ---------------------
     
@@ -153,7 +144,7 @@ bart <- function(formula, dataset, iter = 5000,
     #----------------------------------------------------------------------
     # Sampling details ----------------------------------------------------
     action_taken = "grow"
-    p_grow <- 0.7
+    p_grow <- 0.1
     u_grow <- runif(1)
     depth <- n_distinct(my_tree$node)
     
@@ -171,16 +162,30 @@ bart <- function(formula, dataset, iter = 5000,
       selec_var <- depara_names$new[sample(1:p_vars, size = 1)]
       rule  <- p_rule(variable_index = selec_var,
                       data = my_tree, sel_node = drawn_node)
-      
-      if(is.na(rule)){
-        sample_tree <- my_tree 
-      } else{
-      # Grow the tree
-      sample_tree <- grow_tree(
-        current_tree = my_tree, selec_var = selec_var,
-        drawn_node = drawn_node, rule = rule
-      )
-      }
+
+
+        # all_actions <- paste0(
+        #   results_current$var, " ",
+        #   results_current$rule
+        # )
+        # 
+        # current_action <- paste0(selec_var, " ", rule)
+        # if(current_action %in% all_actions){
+        #   sample_tree <- my_tree
+        #   parent_action <- NA
+        # } else{
+          
+          if(is.na(rule)){
+            sample_tree <- my_tree 
+            parent_action <- NA
+          } else {
+            # Grow the tree
+            sample_tree <- grow_tree(
+              current_tree = my_tree, selec_var = selec_var,
+              drawn_node = drawn_node, rule = rule
+            )
+          }
+        #}
       
       # Checking whether all of the nodes have the minimum
       # of observations required -- per group as well
@@ -206,11 +211,12 @@ bart <- function(formula, dataset, iter = 5000,
         
         # Saving the parent of the new node to use in the
         # calculation of the transition ratio
-        if(is.na(rule)){
-          sample_tree <- my_tree
-          parent_action <- NA
-          #r <- 0 
-        } else{
+        # if(is.na(rule)){
+        #   sample_tree <- my_tree
+        #   parent_action <- NA
+        #   #r <- 0 
+        # } else{
+        if(!identical(my_tree, sample_tree)){
         parent_action <- sample_tree %>%
           dplyr::filter(parent == drawn_node) %>%
           dplyr::pull(parent) %>%
@@ -240,7 +246,7 @@ bart <- function(formula, dataset, iter = 5000,
                         i = i, 
                         p_grow = p_grow)
         
-        }
+        } else{ r <- 0 }
       }
       # Should we prune the tree?
     } else { 
@@ -255,7 +261,7 @@ bart <- function(formula, dataset, iter = 5000,
         dplyr::distinct(parent) %>%
         dplyr::pull(parent)
       
-      parent_prune <- stringr::str_remove(parent_action, '( right| left)$')
+      #parent_prune <- stringr::str_remove(parent_action, '( right| left)$')
 
       # results_current <- results_current %>%
       #   dplyr::filter(!stringr::str_detect(node, parent_prune))
@@ -267,7 +273,7 @@ bart <- function(formula, dataset, iter = 5000,
 
       rule <- NA
       
-      # Grow the tree
+      # Prune the tree
       sample_tree <- prune_tree(
         current_tree = my_tree, drawn_node, selec_var
       )
@@ -275,7 +281,7 @@ bart <- function(formula, dataset, iter = 5000,
       # table(my_tree$node)
       
       results_new <- results_current %>% 
-      dplyr::filter(!stringr::str_detect(node, parent_prune))
+      dplyr::filter(!stringr::str_detect(node, parent_action))
     
       # Calculating the acceptance ratio for the prune,
       # which uses the ratios of:
@@ -321,39 +327,29 @@ bart <- function(formula, dataset, iter = 5000,
       if(u >= r){
         # If that, do not accept tree
         sample_tree <- my_tree
-      }else{
+      } else {
         results_current <- results_new
         
-        # Need to find a better way to do this
-        # # # Is this the same action as the latest iteration
+        #Need to find a better way to do this
+        # # Is this the same action as the latest iteration
         # if(nrow(results_current) > 1 && action_taken == 'grow'){
-        #   all_actions <- paste0( 
-        #                         results_current$var, " ", 
-        #                         results_current$rule
-        #                         )
+        #   
+        #   all_actions <- paste0(
+        #     results_current$var, " ",
+        #     results_current$rule
+        #   )
         #   current_action <- paste0(selec_var, " ", rule)
         #   
         #   if(current_action %in% all_actions){
         #     sample_tree <- my_tree
         #   } else {
-        #   results_current <- results_new
-        #   }} else {
         #     results_current <- results_new
+        #   }
+        # } else {
+        #   results_current <- results_new
         # }
-      }
-      
-      
-      # else{
-      #   results_current <- suppressWarnings(
-      #     dplyr::bind_rows(results_current,
-      #                      data.frame(
-      #                        node = parent_action,
-      #                        var = selec_var,
-      #                        rule = rule,
-      #                        action = action_taken)
-      #   ))
-      #   
-      # }
+    }
+    
     }
     
     # Updating posteriors -----------
@@ -398,7 +394,6 @@ bart <- function(formula, dataset, iter = 5000,
     
   }
     
-  
     
     samp_aux <- all_trees %>% 
       dplyr::mutate(current_tree = map(tree_data, ~{ tail(.x, 1)})) %>% 

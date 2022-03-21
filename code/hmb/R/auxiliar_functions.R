@@ -19,10 +19,23 @@ p_rule <- function(variable_index, data, sel_node){
   #   var > stats::quantile(var, 0.05) & var < stats::quantile(var, 0.95)], 
   #   size = 1)
   
+  # if binary
   
   if(length(var) < 2){
     return(NA)
-  } else {
+  } else if(length(var) == 2){
+    selected_rule <- sample(var, size = 1)
+    
+    # is this the maximum? 
+    max_all <- data %>%
+      dplyr::pull(variable_index) %>% 
+      unique() %>% 
+      max()
+    if(selected_rule == max_all){
+      selected_rule <- var[!(var == selected_rule)]
+    }
+    
+  } else {  
     var <- var[!c(var %in% c(min(var), max(var)))]
     selected_rule <- sample(var, size = 1)
     

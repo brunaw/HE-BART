@@ -35,7 +35,7 @@ sample_parameters_bart <- function(
       group_by(tree_index) %>%
       mutate(rn = row_number()) %>% 
       pivot_wider(names_from = tree_index, values_from = sampled_mu_j) %>% 
-      select(-rn) %>% 
+      dplyr::select(-rn) %>% 
       mutate(pred = rowSums(.[2:ncol(.)]))
     
     res_muj <- current_tree_post %>% 
